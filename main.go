@@ -43,7 +43,6 @@ func postAlbums(c *gin.Context) {
 	var newAlbum album
 
 	// Call BindJSON to bind the received JSON to newAlbum.
-	// TODO learn what the ampersand before newAlbum means
 	if err := c.BindJSON(&newAlbum); err != nil {
 		return
 	}
