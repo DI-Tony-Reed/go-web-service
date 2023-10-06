@@ -2,36 +2,15 @@ package main
 
 import (
 	"database/sql"
+	"example/web-service-gin/models"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 	"log"
 	"net/http"
 )
 
 func main() {
-	// Setup DB connection
-	// TODO use os.Getenv and move the `export` statements to a DockerFile so it's automatic
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "password",
-		Net:                  "tcp",
-		Addr:                 "127.0.0.1:33307",
-		DBName:               "recordings",
-		AllowNativePasswords: true,
-	}
-
-	// Get DB handle
-	var err error
-	db, err = sql.Open("mysql", config.FormatDSN())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
-	}
+	db = databaseInit()
 
 	// Setup gin router
 	router := gin.Default()
@@ -49,15 +28,7 @@ func main() {
 	}
 }
 
-// Album represents data about a record album.
-type Album struct {
-	ID     int64
-	Title  string
-	Artist string
-	Price  float32
-}
-
-var albums []Album
+var albums []models.Album
 
 var db *sql.DB
 
@@ -73,7 +44,7 @@ func getAlbums(c *gin.Context) {
 }
 
 // Query by artist name
-func getAlbumsByArtist(name string) ([]Album, error) {
+func getAlbumsByArtist(name string) ([]models.Album, error) {
 	rows, err := db.Query("SELECT * FROM album WHERE artist = ?", name)
 	if err != nil {
 		return nil, fmt.Errorf("getAlbumsByArtist %q: %v", name, err)
@@ -92,7 +63,7 @@ func getAlbumsByArtistJSON(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, albums)
 }
 
-func getAlbumsRows() ([]Album, error) {
+func getAlbumsRows() ([]models.Album, error) {
 	rows, err := db.Query("SELECT * FROM album")
 
 	if err != nil {
@@ -102,15 +73,15 @@ func getAlbumsRows() ([]Album, error) {
 	return handleAlbumRows(rows)
 }
 
-func handleAlbumRows(rows *sql.Rows) ([]Album, error) {
+func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	// Albums slice to hold db rows
-	var albums []Album
+	var albums []models.Album
 
 	defer rows.Close()
 
 	// Loop rows using Scan to assign to struct fields
 	for rows.Next() {
-		var album Album
+		var album models.Album
 		if err := rows.Scan(&album.ID, &album.Title, &album.Artist, &album.Price); err != nil {
 			return nil, fmt.Errorf("handleAlbumRows %v", err)
 		}
@@ -127,7 +98,7 @@ func handleAlbumRows(rows *sql.Rows) ([]Album, error) {
 
 // postAlbums adds an album from JSON received in the request body.
 func postAlbums(c *gin.Context) {
-	var newAlbum Album
+	var newAlbum models.Album
 
 	// Call BindJSON to bind the received JSON to newAlbum.
 	if err := c.BindJSON(&newAlbum); err != nil {
