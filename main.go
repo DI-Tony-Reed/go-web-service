@@ -96,20 +96,7 @@ func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	return albums, nil
 }
 
-// postAlbums adds an album from JSON received in the request body.
-func postAlbums(c *gin.Context) {
-	var newAlbum models.Album
-
-	// Call BindJSON to bind the received JSON to newAlbum.
-	if err := c.BindJSON(&newAlbum); err != nil {
-		return
-	}
-
-	// Add the new album to the slice.
-	albums = append(albums, newAlbum)
-	c.IndentedJSON(http.StatusCreated, newAlbum)
-}
-
+// TODO add method that reads all url variables and creates
 // addAlbum adds an album to the database
 // returning the album ID of the new entry
 func addAlbum(album models.Album) (int64, error) {
@@ -126,6 +113,7 @@ func addAlbum(album models.Album) (int64, error) {
 	return id, nil
 }
 
+// TODO move this to a db query
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
 //func getAlbumByID(c *gin.Context) {
