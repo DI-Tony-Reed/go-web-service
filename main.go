@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
 	"log"
@@ -34,9 +35,13 @@ func main() {
 
 	// Setup gin router
 	router := gin.Default()
-	router.GET("/albums", getAlbums)
-	router.GET("/albums/:id", getAlbumByID)
-	router.POST("/albums", postAlbums)
+	//router.GET("/albums", getAlbums)
+	//router.GET("/albums/:id", getAlbumByID)
+	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
+	//router.POST("/albums", postAlbums)
+
+	alb, err := getAlbumsRows()
+	fmt.Printf("Album(s) found: %v\n", alb)
 
 	err = router.Run("localhost:8081")
 	if err != nil {
@@ -44,31 +49,85 @@ func main() {
 	}
 }
 
-// album represents data about a record album.
-type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+// Album represents data about a record album.
+type Album struct {
+	ID     int64
+	Title  string
+	Artist string
+	Price  float32
 }
+
+var albums []Album
 
 var db *sql.DB
 
-// albums slice to seed record album data.
-var albums = []album{
-	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-	{ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-	{ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
-}
-
 // getAlbums responds with the list of all albums as JSON.
 func getAlbums(c *gin.Context) {
+	albums, err := getAlbumsRows()
+
+	if err != nil {
+		fmt.Printf("getAlbumsByArtist %v", err)
+	}
+
 	c.IndentedJSON(http.StatusOK, albums)
+}
+
+// Query by artist name
+func getAlbumsByArtist(name string) ([]Album, error) {
+	rows, err := db.Query("SELECT * FROM album WHERE artist = ?", name)
+	if err != nil {
+		return nil, fmt.Errorf("getAlbumsByArtist %q: %v", name, err)
+	}
+
+	return handleAlbumRows(rows)
+}
+
+func getAlbumsByArtistJSON(c *gin.Context) {
+	albums, err := getAlbumsByArtist(c.Param("artist"))
+
+	if err != nil {
+		panic("failed to get by artist name")
+	}
+
+	c.IndentedJSON(http.StatusCreated, albums)
+}
+
+func getAlbumsRows() ([]Album, error) {
+	rows, err := db.Query("SELECT * FROM album")
+
+	if err != nil {
+		return nil, fmt.Errorf("handleAlbumRows %v", err)
+	}
+
+	return handleAlbumRows(rows)
+}
+
+func handleAlbumRows(rows *sql.Rows) ([]Album, error) {
+	// Albums slice to hold db rows
+	var albums []Album
+
+	defer rows.Close()
+
+	// Loop rows using Scan to assign to struct fields
+	for rows.Next() {
+		var album Album
+		if err := rows.Scan(&album.ID, &album.Title, &album.Artist, &album.Price); err != nil {
+			return nil, fmt.Errorf("handleAlbumRows %v", err)
+		}
+
+		albums = append(albums, album)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("handleAlbumRows %v", err)
+	}
+
+	return albums, nil
 }
 
 // postAlbums adds an album from JSON received in the request body.
 func postAlbums(c *gin.Context) {
-	var newAlbum album
+	var newAlbum Album
 
 	// Call BindJSON to bind the received JSON to newAlbum.
 	if err := c.BindJSON(&newAlbum); err != nil {
@@ -82,17 +141,17 @@ func postAlbums(c *gin.Context) {
 
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
-func getAlbumByID(c *gin.Context) {
-	id := c.Param("id")
-
-	// Loop over the list of albums, looking for
-	// an album whose ID value matches the parameter.
-	for _, album := range albums {
-		if album.ID == id {
-			c.IndentedJSON(http.StatusOK, album)
-			return
-		}
-	}
-
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
-}
+//func getAlbumByID(c *gin.Context) {
+//	id := c.Param("id")
+//
+//	// Loop over the list of albums, looking for
+//	// an album whose ID value matches the parameter.
+//	for _, album := range albums {
+//		if album.ID == id {
+//			c.IndentedJSON(http.StatusOK, album)
+//			return
+//		}
+//	}
+//
+//	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+//}
