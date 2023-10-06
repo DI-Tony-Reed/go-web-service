@@ -14,7 +14,7 @@ func main() {
 
 	// Setup gin router
 	router := gin.Default()
-	//router.GET("/albums", getAlbums)
+	router.GET("/albums", getAlbums)
 	//router.GET("/albums/:id", getAlbumByID)
 	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
 	//router.POST("/albums", postAlbums)
@@ -108,6 +108,22 @@ func postAlbums(c *gin.Context) {
 	// Add the new album to the slice.
 	albums = append(albums, newAlbum)
 	c.IndentedJSON(http.StatusCreated, newAlbum)
+}
+
+// addAlbum adds an album to the database
+// returning the album ID of the new entry
+func addAlbum(album models.Album) (int64, error) {
+	result, err := db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
+	if err != nil {
+		return 0, fmt.Errorf("addAlbum: %v", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("addAlbum: %v", err)
+	}
+
+	return id, nil
 }
 
 // getAlbumByID locates the album whose ID value matches the id
