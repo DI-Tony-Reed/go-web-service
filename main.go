@@ -15,7 +15,7 @@ func main() {
 	// Setup gin router
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
-	//router.GET("/albums/:id", getAlbumByID)
+	router.GET("/albums/:id", getAlbumByID)
 	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
 	//router.POST("/albums", postAlbums)
 
@@ -113,20 +113,25 @@ func addAlbum(album models.Album) (int64, error) {
 	return id, nil
 }
 
-// TODO move this to a db query
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
-//func getAlbumByID(c *gin.Context) {
-//	id := c.Param("id")
-//
-//	// Loop over the list of albums, looking for
-//	// an album whose ID value matches the parameter.
-//	for _, album := range albums {
-//		if album.ID == id {
-//			c.IndentedJSON(http.StatusOK, album)
-//			return
-//		}
-//	}
-//
-//	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
-//}
+func getAlbumByID(c *gin.Context) {
+	id := c.Param("id")
+	rows, err := db.Query("SELECT * FROM album WHERE id = ?", id)
+
+	if err != nil {
+		log.Fatalf("getAlbumsByID %q: %v", id, err)
+	}
+
+	albums, err := handleAlbumRows(rows)
+
+	if err != nil {
+		log.Fatal("failure within handleAlbumRows")
+	}
+
+	if len(albums) == 0 {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+	} else {
+		c.IndentedJSON(http.StatusOK, albums)
+	}
+}
