@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumByID)
 	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
-	//router.POST("/albums", postAlbums)
+	router.POST("/albums", addAlbum)
 
 	alb, err := getAlbumsRows()
 	fmt.Printf("Album(s) found: %v\n", alb)
@@ -96,21 +97,46 @@ func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	return albums, nil
 }
 
-// TODO add method that reads all url variables and creates
 // addAlbum adds an album to the database
-// returning the album ID of the new entry
-func addAlbum(album models.Album) (int64, error) {
+// returning the new album in the response
+func addAlbum(c *gin.Context) {
+	postParameters := c.Request.URL.Query()
+
+	if _, ok := postParameters["title"]; !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'title'"})
+		return
+	}
+
+	if _, ok := postParameters["artist"]; !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in an 'artist'"})
+		return
+	}
+
+	if _, ok := postParameters["price"]; !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'price'"})
+		return
+	}
+
+	price, _ := strconv.ParseFloat(postParameters.Get("price"), 32)
+
+	album := models.Album{
+		Title:  postParameters.Get("title"),
+		Artist: postParameters.Get("artist"),
+		Price:  float32(price),
+	}
+
 	result, err := db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
 	if err != nil {
-		return 0, fmt.Errorf("addAlbum: %v", err)
+		log.Fatalf("addAlbum: %v", err)
 	}
 
-	id, err := result.LastInsertId()
+	_, err = result.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("addAlbum: %v", err)
+		log.Fatalf("addAlbum: %v", err)
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "failed to create album"})
+	} else {
+		c.IndentedJSON(http.StatusOK, album)
 	}
-
-	return id, nil
 }
 
 // getAlbumByID locates the album whose ID value matches the id
