@@ -20,16 +20,11 @@ func main() {
 	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
 	router.POST("/albums", addAlbum)
 
-	alb, err := getAlbumsRows()
-	fmt.Printf("Album(s) found: %v\n", alb)
-
-	err = router.Run("localhost:8081")
+	err := router.Run("localhost:8081")
 	if err != nil {
 		log.Fatal(err)
 	}
 }
-
-var albums []models.Album
 
 var db *sql.DB
 
