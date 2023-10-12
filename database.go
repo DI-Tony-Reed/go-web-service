@@ -2,8 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"github.com/go-sql-driver/mysql"
 	"log"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 func databaseInit() *sql.DB {
