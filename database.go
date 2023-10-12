@@ -13,7 +13,7 @@ func databaseInit() *sql.DB {
 		User:                 "user",
 		Passwd:               "password",
 		Net:                  "tcp",
-		Addr:                 "mysql:3306",
+		Addr:                 "mysql:3306", // Correlates to the mysql service name and port
 		DBName:               "recordings",
 		AllowNativePasswords: true,
 	}
