@@ -21,7 +21,7 @@ func main() {
 	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
 	router.POST("/albums", addAlbum)
 
-	err := router.Run("0.0.0.0:3000")
+	err := router.Run(":3000")
 	if err != nil {
 		log.Fatal(err)
 	}
