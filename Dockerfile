@@ -1,12 +1,11 @@
-FROM golang:1.19 as base
+FROM golang:latest
 
-# Create another stage called "dev" that is based off of our "base" stage (so we have golang available to us)
-FROM base as dev
+WORKDIR ./app
 
-# Install the air binary so we get live code-reloading when we save files
-RUN curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+COPY . .
 
-# Run the air command in the directory where our code will live
-WORKDIR /app
+RUN go get && go install
 
-CMD ["air"]
+EXPOSE 3000
+
+CMD ["go-web-service"]
