@@ -3,19 +3,19 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	"github.com/go-sql-driver/mysql"
 )
 
 func databaseInit() *sql.DB {
 	// Setup DB connection
-	// TODO use os.Getenv and move the `export` statements to a DockerFile so it's automatic
 	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "password",
+		User:                 os.Getenv("DB_USER"),
+		Passwd:               os.Getenv("DB_PASSWORD"),
 		Net:                  "tcp",
-		Addr:                 "127.0.0.1:33307",
-		DBName:               "recordings",
+		Addr:                 os.Getenv("DB_ADDRESS") + ":" + os.Getenv("DB_PORT"),
+		DBName:               os.Getenv("DB_NAME"),
 		AllowNativePasswords: true,
 	}
 

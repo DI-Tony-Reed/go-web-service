@@ -1,6 +1,19 @@
 version: '3.9'
 
 services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    networks:
+      - db
+    command: air
   mysql:
     image: mysql
     restart: always
@@ -15,3 +28,9 @@ services:
       - ./init:/docker-entrypoint-initdb.d
     ports:
       - '33307:3306'
+    networks:
+      - db
+
+networks:
+  db:
+    driver: bridge
