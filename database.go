@@ -3,24 +3,30 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 func databaseInit() *sql.DB {
+	err := godotenv.Load()
+
+	if err != nil {
+		panic("failed to load .env file")
+	}
+
 	// Setup DB connection
-	// TODO use os.Getenv and move the `export` statements to a DockerFile so it's automatic
 	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "password",
+		User:                 os.Getenv("DATABASE_USER"),
+		Passwd:               os.Getenv("DATABASE_PASSWORD"),
 		Net:                  "tcp",
-		Addr:                 "127.0.0.1:33307",
-		DBName:               "recordings",
+		Addr:                 os.Getenv("DATABASE_ADDRESS") + ":" + os.Getenv("DATABASE_PORT"),
+		DBName:               os.Getenv("DATABASE_NAME"),
 		AllowNativePasswords: true,
 	}
 
 	// Get DB handle
-	var err error
 	db, err = sql.Open("mysql", config.FormatDSN())
 	if err != nil {
 		log.Fatal(err)

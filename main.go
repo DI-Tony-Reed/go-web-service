@@ -2,12 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"example/web-service-gin/models"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"go-web-service/models"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
 	router.POST("/albums", addAlbum)
 
-	err := router.Run("localhost:8081")
+	err := router.Run(":8081")
 	if err != nil {
 		log.Fatal(err)
 	}
