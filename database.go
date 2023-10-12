@@ -3,23 +3,30 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 func databaseInit() *sql.DB {
+	err := godotenv.Load()
+
+	if err != nil {
+		panic("failed to load .env file")
+	}
+
 	// Setup DB connection
 	config := mysql.Config{
-		User:                 "user",
-		Passwd:               "password",
+		User:                 os.Getenv("DATABASE_USER"),
+		Passwd:               os.Getenv("DATABASE_PASSWORD"),
 		Net:                  "tcp",
-		Addr:                 "mysql:3306", // Correlates to the mysql service name and port
-		DBName:               "recordings",
+		Addr:                 os.Getenv("DATABASE_ADDRESS") + ":" + os.Getenv("DATABASE_PORT"),
+		DBName:               os.Getenv("DATABASE_NAME"),
 		AllowNativePasswords: true,
 	}
 
 	// Get DB handle
-	var err error
 	db, err = sql.Open("mysql", config.FormatDSN())
 	if err != nil {
 		log.Fatal(err)
