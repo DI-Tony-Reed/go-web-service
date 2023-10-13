@@ -20,7 +20,8 @@ func main() {
 	router.GET("/albums/:id", getAlbumByID)
 	router.GET("/albums/artist/:artist", getAlbumsByArtist)
 	router.POST("/albums", addAlbum)
-	//router.POST("/albums/:id", updateAlbum)
+	//router.PATCH("/albums/:id", updateAlbum)
+	router.DELETE("/albums/:id", deleteAlbum)
 
 	err := router.Run(":8081")
 	if err != nil {
@@ -67,6 +68,7 @@ func getAlbumsRows() ([]models.Album, error) {
 	return handleAlbumRows(rows)
 }
 
+// handleAlbumRows is a helper function to reduce repetition for handling SQL results
 func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	// Albums slice to hold db rows
 	var albums []models.Album
@@ -153,6 +155,15 @@ func getAlbumByID(c *gin.Context) {
 	} else {
 		c.IndentedJSON(http.StatusOK, albums)
 	}
+}
+
+func deleteAlbum(c *gin.Context) {
+	_, err := db.Exec("DELETE FROM album WHERE id = ?", c.Param("id"))
+	if err != nil {
+		log.Fatalf("failed to delete album")
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Album successfully removed"})
 }
 
 // TODO add update method
