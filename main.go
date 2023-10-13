@@ -173,19 +173,9 @@ func updateAlbum(c *gin.Context) {
 	var keys []string
 	var values []any
 
-	if _, ok := parameters["title"]; ok {
-		keys = append(keys, "title")
-		values = append(values, parameters["title"][0])
-	}
-
-	if _, ok := parameters["artist"]; ok {
-		keys = append(keys, "artist")
-		values = append(values, parameters["artist"][0])
-	}
-
-	if _, ok := parameters["price"]; ok {
-		keys = append(keys, "price")
-		values = append(values, parameters["price"][0])
+	for key, value := range parameters {
+		keys = append(keys, key)
+		values = append(values, value[0])
 	}
 
 	dynamicSql := "UPDATE album SET "
@@ -203,7 +193,7 @@ func updateAlbum(c *gin.Context) {
 
 	_, err := db.Exec(dynamicSql, values...)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update record", "err": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update record"})
 		return
 	}
 
