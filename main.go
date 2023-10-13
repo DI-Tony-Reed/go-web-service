@@ -18,8 +18,9 @@ func main() {
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumByID)
-	router.GET("/albums/artist/:artist", getAlbumsByArtistJSON)
+	router.GET("/albums/artist/:artist", getAlbumsByArtist)
 	router.POST("/albums", addAlbum)
+	//router.POST("/albums/:id", updateAlbum)
 
 	err := router.Run(":8081")
 	if err != nil {
@@ -40,21 +41,17 @@ func getAlbums(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, albums)
 }
 
-// Query by artist name
-func getAlbumsByArtist(name string) ([]models.Album, error) {
+func getAlbumsByArtist(c *gin.Context) {
+	name := c.Param("artist")
+
 	rows, err := db.Query("SELECT * FROM album WHERE artist = ?", name)
 	if err != nil {
-		return nil, fmt.Errorf("getAlbumsByArtist %q: %v", name, err)
+		log.Fatalf("getAlbumsByArtist %q: %v", name, err)
 	}
 
-	return handleAlbumRows(rows)
-}
-
-func getAlbumsByArtistJSON(c *gin.Context) {
-	albums, err := getAlbumsByArtist(c.Param("artist"))
-
+	albums, err := handleAlbumRows(rows)
 	if err != nil {
-		panic("failed to get by artist name")
+		log.Fatalf("failed to get albums by artist")
 	}
 
 	c.IndentedJSON(http.StatusCreated, albums)
@@ -157,3 +154,5 @@ func getAlbumByID(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, albums)
 	}
 }
+
+// TODO add update method
