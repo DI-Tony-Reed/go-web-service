@@ -19,8 +19,9 @@ func main() {
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumByID)
 	router.GET("/albums/artist/:artist", getAlbumsByArtist)
+
 	router.POST("/albums", addAlbum)
-	//router.PATCH("/albums/:id", updateAlbum)
+	router.PATCH("/albums/:id", updateAlbum)
 	router.DELETE("/albums/:id", deleteAlbum)
 
 	err := router.Run(":8081")
@@ -166,4 +167,30 @@ func deleteAlbum(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Album successfully removed"})
 }
 
-// TODO add update method
+func updateAlbum(c *gin.Context) {
+	parameters := c.Request.URL.Query()
+	id := c.Param("id")
+
+	if _, ok := parameters["title"]; !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'title'"})
+		return
+	}
+
+	if _, ok := parameters["artist"]; !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in an 'artist'"})
+		return
+	}
+
+	if _, ok := parameters["price"]; !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'price'"})
+		return
+	}
+
+	_, err := db.Exec("UPDATE album SET title = ?, artist = ?, price = ? WHERE id = ?", parameters["title"][0], parameters["artist"][0], parameters["price"][0], id)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update record", "error": err.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "record successfully updated"})
+}
