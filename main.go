@@ -169,26 +169,41 @@ func deleteAlbum(c *gin.Context) {
 
 func updateAlbum(c *gin.Context) {
 	parameters := c.Request.URL.Query()
-	id := c.Param("id")
 
-	if _, ok := parameters["title"]; !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'title'"})
-		return
+	var keys []string
+	var values []any
+
+	if _, ok := parameters["title"]; ok {
+		keys = append(keys, "title")
+		values = append(values, parameters["title"][0])
 	}
 
-	if _, ok := parameters["artist"]; !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in an 'artist'"})
-		return
+	if _, ok := parameters["artist"]; ok {
+		keys = append(keys, "artist")
+		values = append(values, parameters["artist"][0])
 	}
 
-	if _, ok := parameters["price"]; !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'price'"})
-		return
+	if _, ok := parameters["price"]; ok {
+		keys = append(keys, "price")
+		values = append(values, parameters["price"][0])
 	}
 
-	_, err := db.Exec("UPDATE album SET title = ?, artist = ?, price = ? WHERE id = ?", parameters["title"][0], parameters["artist"][0], parameters["price"][0], id)
+	dynamicSql := "UPDATE album SET "
+	for key, value := range keys {
+		dynamicSql += value + " = ?"
+
+		if (key + 1) < len(keys) {
+			dynamicSql += ", "
+		} else {
+			dynamicSql += " "
+		}
+	}
+	dynamicSql = dynamicSql + "WHERE id = ?"
+	values = append(values, c.Param("id"))
+
+	_, err := db.Exec(dynamicSql, values...)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update record", "error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update record", "err": err.Error()})
 		return
 	}
 
