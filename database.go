@@ -10,7 +10,16 @@ import (
 )
 
 func databaseInit() *sql.DB {
-	err := godotenv.Load()
+	var path string
+
+	// This is dictated via build flags
+	if environment == "development" {
+		path = ".env.development"
+	} else {
+		path = ".env"
+	}
+
+	err := godotenv.Load(path)
 
 	if err != nil {
 		panic("failed to load .env file")

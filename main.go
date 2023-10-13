@@ -11,6 +11,8 @@ import (
 	"go-web-service/models"
 )
 
+var environment = "development"
+
 func main() {
 	db = databaseInit()
 

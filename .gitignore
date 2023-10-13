@@ -1,3 +1,10 @@
+# IDE & build tools fluff
 *.idea/
 tmp/
+
+# Environment variables
 .env
+.env.development
+
+# Generated executables
+go-web-service.exe
