@@ -78,19 +78,12 @@ func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 func (e *Env) AddAlbum(c *gin.Context) {
 	postParameters := c.Request.URL.Query()
 
-	if _, ok := postParameters["title"]; !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'title'"})
-		return
-	}
-
-	if _, ok := postParameters["artist"]; !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in an 'artist'"})
-		return
-	}
-
-	if _, ok := postParameters["price"]; !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a 'price'"})
-		return
+	requiredParametersKeys := []string{"title", "artist", "price"}
+	for _, value := range requiredParametersKeys {
+		if _, ok := postParameters[value]; !ok {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a '" + value + "'"})
+			return
+		}
 	}
 
 	price, _ := strconv.ParseFloat(postParameters.Get("price"), 32)

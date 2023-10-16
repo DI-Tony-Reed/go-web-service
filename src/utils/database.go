@@ -18,13 +18,13 @@ func DatabaseInit() *sql.DB {
 	if environment == "production" {
 		path = ".env.production"
 	} else {
-		path = ".env.production.development"
+		path = ".env.development"
 	}
 
 	err := godotenv.Load(path)
 
 	if err != nil {
-		panic("failed to load .env.production file")
+		panic("failed to load .env file")
 	}
 
 	// Setup DB connection
