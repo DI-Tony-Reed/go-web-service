@@ -20,7 +20,7 @@ func (e *Env) GetAlbums(c *gin.Context) {
 	albums, err := e.getAlbumsRows()
 
 	if err != nil {
-		fmt.Printf("getAlbumsByArtist %v", err)
+		fmt.Printf("GetAlbums %v", err)
 	}
 
 	c.IndentedJSON(http.StatusOK, albums)
@@ -31,7 +31,7 @@ func (e *Env) GetAlbumsByArtist(c *gin.Context) {
 
 	rows, err := e.Db.Query("SELECT * FROM album WHERE artist = ?", name)
 	if err != nil {
-		log.Fatalf("getAlbumsByArtist %q: %v", name, err)
+		log.Fatalf("GetAlbumsByArtist %q: %v", name, err)
 	}
 
 	albums, err := handleAlbumRows(rows)
@@ -103,7 +103,7 @@ func (e *Env) AddAlbum(c *gin.Context) {
 
 	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
 	if err != nil {
-		log.Fatalf("addAlbum: %v", err)
+		log.Fatalf("AddAlbum: %v", err)
 	}
 
 	_, err = result.LastInsertId()
@@ -142,7 +142,7 @@ func (e *Env) DeleteAlbum(c *gin.Context) {
 		log.Fatalf("failed to delete album")
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "Album successfully removed"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
 }
 
 func (e *Env) UpdateAlbum(c *gin.Context) {
@@ -171,9 +171,9 @@ func (e *Env) UpdateAlbum(c *gin.Context) {
 
 	_, err := e.Db.Exec(dynamicSql, values...)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update record"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update album"})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "record successfully updated"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
 }

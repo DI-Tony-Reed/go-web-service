@@ -3,7 +3,7 @@
 - `docker-compose up`
 
 # Preparing a production build
-- `go build -ldflags="-X 'main.environment=production'"`
+- `go build -ldflags="-X 'utils.environment=production'"`
     - This replaces the `environment` variable within the `main` package and allows us to swap which env file to use based on the build type
 
 # To run the final production executable
