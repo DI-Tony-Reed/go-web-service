@@ -6,27 +6,9 @@ import (
 	"os"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/joho/godotenv"
 )
 
-var environment = "development"
-
 func DatabaseInit() *sql.DB {
-	var path string
-
-	// This variable is updated via build flags for prod builds
-	if environment == "production" {
-		path = ".env.production"
-	} else {
-		path = ".env.development"
-	}
-
-	err := godotenv.Load(path)
-
-	if err != nil {
-		panic("failed to load .env file")
-	}
-
 	// Setup DB connection
 	config := mysql.Config{
 		User:                 os.Getenv("DATABASE_USER"),

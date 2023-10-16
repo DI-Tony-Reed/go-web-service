@@ -2,11 +2,32 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go-web-service/src/rest"
 	"go-web-service/src/utils"
 )
+
+var environment = "development"
+
+func init() {
+	var path string
+
+	// This variable is updated via build flags for prod builds
+	if environment == "production" {
+		path = ".env.production"
+	} else {
+		path = ".env.development"
+	}
+
+	err := godotenv.Load(path)
+
+	if err != nil {
+		panic("failed to load .env file")
+	}
+}
 
 func main() {
 	db := utils.DatabaseInit()
@@ -23,7 +44,7 @@ func main() {
 	router.PATCH("/albums/:id", env.UpdateAlbum)
 	router.DELETE("/albums/:id", env.DeleteAlbum)
 
-	err := router.Run(":8081")
+	err := router.Run(":" + os.Getenv("APPLICATION_PORT"))
 	if err != nil {
 		log.Fatal(err)
 	}
