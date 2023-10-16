@@ -1,20 +1,17 @@
-# Specifies a parent image
 FROM golang:latest
 
-# Creates an application directory to hold the source code
 WORKDIR /app
 
-# Copies everything from your root directory into /app
-COPY . ./
+COPY go.mod go.sum ./
 
-# Installs Go dependencies
-#RUN go mod download
-#RUN go mod verify
-#
-## Builds the application while setting production variable build variable
-#RUN go build -ldflags="-X 'go-web-service/src/utils.environment=production'" -o /go-web-service
-#
-## Specifies the executable command that runs when the container starts
-#CMD ["/go-web-service"]
+RUN go mod download
+COPY * ./
 
-RUN ["/bin/bash"]
+RUN go mod tidy
+
+RUN go build
+RUN go build -ldflags="-X 'main.environment=production'" -o /go-web-service
+
+EXPOSE 8080
+
+CMD ["/go-web-service"]
