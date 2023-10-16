@@ -38,7 +38,7 @@ func DatabaseInit() *sql.DB {
 	}
 
 	// Get DB handle
-	db, err = sql.Open("mysql", config.FormatDSN())
+	db, err := sql.Open("mysql", config.FormatDSN())
 	if err != nil {
 		log.Fatal(err)
 	}
