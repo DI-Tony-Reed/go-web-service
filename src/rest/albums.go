@@ -15,7 +15,6 @@ type Env struct {
 	Db *sql.DB
 }
 
-// GetAlbums responds with the list of all albums as JSON.
 func (e *Env) GetAlbums(c *gin.Context) {
 	albums, err := e.getAlbumsRows()
 
