@@ -9,12 +9,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go-web-service/models"
+	"go-web-service/utils"
 )
 
-var environment = "development"
-
 func main() {
-	db = databaseInit()
+	db = utils.databaseInit()
 
 	// Setup gin router
 	router := gin.Default()
@@ -22,6 +21,7 @@ func main() {
 	router.GET("/albums/:id", getAlbumByID)
 	router.GET("/albums/artist/:artist", getAlbumsByArtist)
 
+	// TODO update this to PUT
 	router.POST("/albums", addAlbum)
 	router.PATCH("/albums/:id", updateAlbum)
 	router.DELETE("/albums/:id", deleteAlbum)

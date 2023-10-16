@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"database/sql"
@@ -9,14 +9,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var environment = "development"
+
 func databaseInit() *sql.DB {
 	var path string
 
-	// This is dictated via build flags
-	if environment == "development" {
-		path = ".env.development"
-	} else {
+	// This variable is updated via build flags for prod builds
+	if environment == "production" {
 		path = ".env"
+	} else {
+		path = ".env.development"
 	}
 
 	err := godotenv.Load(path)
