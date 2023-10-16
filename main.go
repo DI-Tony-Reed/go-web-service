@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +9,7 @@ import (
 )
 
 func main() {
-	db = utils.DatabaseInit()
+	db := utils.DatabaseInit()
 	env := &rest.Env{Db: db}
 
 	// Setup gin router
@@ -29,5 +28,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-var db *sql.DB
