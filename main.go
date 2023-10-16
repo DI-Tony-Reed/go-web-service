@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	db = utils.databaseInit()
+	db = utils.DatabaseInit()
 
 	// Setup gin router
 	router := gin.Default()

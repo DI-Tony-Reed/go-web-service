@@ -11,7 +11,7 @@ import (
 
 var environment = "development"
 
-func databaseInit() *sql.DB {
+func DatabaseInit() *sql.DB {
 	var path string
 
 	// This variable is updated via build flags for prod builds
