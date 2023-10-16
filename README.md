@@ -1,5 +1,5 @@
 # First time setup
-- Copy `.env.example` to `.env` and `.env.development` and fill out with the appropriate values based on your desired environment
+- Copy `.env.example` to `.env.production` and `.env.development` and fill out with the appropriate values based on your desired environment
 - `docker-compose up`
 
 # Preparing a production build

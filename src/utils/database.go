@@ -16,15 +16,15 @@ func DatabaseInit() *sql.DB {
 
 	// This variable is updated via build flags for prod builds
 	if environment == "production" {
-		path = ".env"
+		path = ".env.production"
 	} else {
-		path = ".env.development"
+		path = ".env.production.development"
 	}
 
 	err := godotenv.Load(path)
 
 	if err != nil {
-		panic("failed to load .env file")
+		panic("failed to load .env.production file")
 	}
 
 	// Setup DB connection
