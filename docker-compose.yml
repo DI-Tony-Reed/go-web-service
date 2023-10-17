@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  air:
+  development:
+    container_name: development
     image: cosmtrek/air
-    container_name: app
     working_dir: /app
     restart: always
     env_file:
@@ -18,12 +18,12 @@ services:
   mysql:
     image: mysql
     restart: always
-    container_name: go-mysql-db
+    container_name: database
     command: --default-authentication-plugin=mysql_native_password
     env_file:
       - .env.development
     volumes:
-      - ./init:/docker-entrypoint-initdb.d
+      - ./Docker/init:/docker-entrypoint-initdb.d
     ports:
       - '33307:3306'
     healthcheck:
