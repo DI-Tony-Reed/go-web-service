@@ -7,4 +7,4 @@ tmp/
 .env.development
 
 # Generated executables
-go-web-service.exe
+go-web-service*
