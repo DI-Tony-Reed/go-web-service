@@ -41,6 +41,7 @@ func main() {
 	router.GET("/albums/artist/:artist", env.GetAlbumsByArtist)
 
 	router.PUT("/albums", env.AddAlbum)
+	router.PUT("/albums/random", env.AddRandom)
 	router.PATCH("/albums/:id", env.UpdateAlbum)
 	router.DELETE("/albums/:id", env.DeleteAlbum)
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"go-web-service/src/models"
 )
@@ -98,11 +99,12 @@ func (e *Env) AddAlbum(c *gin.Context) {
 		log.Fatalf("AddAlbum: %v", err)
 	}
 
-	_, err = result.LastInsertId()
+	lastId, err := result.LastInsertId()
 	if err != nil {
 		log.Fatalf("addAlbum: %v", err)
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "failed to create album"})
 	} else {
+		album.ID = lastId
 		c.IndentedJSON(http.StatusOK, album)
 	}
 }
@@ -168,4 +170,30 @@ func (e *Env) UpdateAlbum(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
+}
+
+func (e *Env) AddRandom(c *gin.Context) {
+	name := gofakeit.Name()
+	title := gofakeit.Slogan()
+	price := gofakeit.Float32Range(1.00, 50.00)
+
+	album := models.Album{
+		Title:  title,
+		Artist: name,
+		Price:  price,
+	}
+
+	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
+	if err != nil {
+		log.Fatalf("AddAlbum: %v", err)
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		log.Fatalf("addAlbum: %v", err)
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "failed to create random album"})
+	} else {
+		album.ID = lastId
+		c.IndentedJSON(http.StatusOK, album)
+	}
 }
