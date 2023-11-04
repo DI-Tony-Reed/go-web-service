@@ -1,9 +1,22 @@
-<script setup>
-import TheWelcome from '../components/TheWelcome.vue'
-</script>
-
 <template>
-  <main>
-    <TheWelcome />
-  </main>
+
 </template>
+
+<script>
+import Request from "../helpers/Request";
+
+export default {
+	data() {
+		return {
+			albums: []
+		}
+	},
+	methods: {
+	
+	},
+	created() {
+		let request = new Request('albums')
+		request.call().then(data => this.albums = data)
+	}
+}
+</script>
