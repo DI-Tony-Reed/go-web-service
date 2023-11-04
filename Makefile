@@ -1,5 +1,11 @@
 BINARY_NAME=go-web-service
 
+install:
+	cd frontend && npm install
+
+watch:
+	cd frontend && npm run dev
+
 build:
 	GOARCH=amd64 GOOS=darwin go build -ldflags="-X 'main.environment=production'" -o ${BINARY_NAME}-darwin
 	GOARCH=amd64 GOOS=linux go build -ldflags="-X 'main.environment=production'" -o ${BINARY_NAME}-linux

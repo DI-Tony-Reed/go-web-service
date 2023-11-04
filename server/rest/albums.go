@@ -9,7 +9,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
-	"go-web-service/src/models"
+	"go-web-service/server/models"
 )
 
 type Env struct {

@@ -3,6 +3,7 @@
 - `docker-compose up`
   - The MySQL container will be built and ran first
   - The development container uses Air to watch for files and automatically recompile the application; this container will not attempt to run until the MySQL image is running and returns a healthy response
+- `make install`
 
 # Preparing a production build
 - `docker exec -it development bash`

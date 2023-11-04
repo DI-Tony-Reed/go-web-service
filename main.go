@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"go-web-service/src/rest"
-	"go-web-service/src/utils"
+	"go-web-service/server/rest"
+	"go-web-service/server/utils"
 )
 
 var environment = "development"
