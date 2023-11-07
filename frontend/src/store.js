@@ -1,22 +1,22 @@
 export default {
-    albums: [],
+  albums: [],
 
-    errors: [],
-    waitingOnAjax: false,
+  errors: [],
+  waitingOnAjax: false,
 
-    setWaitingOnAjax(boolean) {
-        this.waitingOnAjax = boolean
-    },
+  setWaitingOnAjax(boolean) {
+    this.waitingOnAjax = boolean
+  },
 
-    setErrors: function (errors) {
-        if (typeof errors === 'string') {
-            errors = [errors]
-        }
-
-        this.errors = errors
-    },
-
-    clearErrors() {
-        this.errors = []
+  setErrors: function (errors) {
+    if (typeof errors === 'string') {
+      errors = [errors]
     }
+
+    this.errors = errors
+  },
+
+  clearErrors() {
+    this.errors = []
+  },
 }

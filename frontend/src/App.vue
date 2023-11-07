@@ -4,19 +4,19 @@
       Spinner.gif :)
     </div>
     <div v-else>
-      <RouterView />
+      <RouterView/>
     </div>
   </div>
 </template>
 
 <script>
-  import store from './store'
+import store from './store'
 
-  export default {
-    computed: {
-      store() {
-        return store
-      }
-    }
-  }
+export default {
+  computed: {
+    store() {
+      return store
+    },
+  },
+}
 </script>
