@@ -1,22 +1,36 @@
 <template>
-  <div>
-    <div v-if="store.waitingOnAjax">
+  <div class="wrapper">
+    <div v-show="store.waitingOnAjax">
       Spinner.gif :)
+      <br>
     </div>
-    <div v-else>
+
+    <div>
+      <div v-if="store.errors" class="mb-2">
+        <Error v-for="error in store.errors" :error="error"></Error>
+      </div>
+
       <RouterView/>
     </div>
   </div>
 </template>
 
 <script>
-import store from './store'
+import { store } from './store'
+import Error from './views/Error.vue'
 
 export default {
-  computed: {
-    store() {
-      return store
-    },
-  },
+  components: {Error},
+  data() {
+    return {
+      store
+    }
+  }
 }
 </script>
+
+<style scoped>
+.wrapper {
+  padding: 1rem
+}
+</style>

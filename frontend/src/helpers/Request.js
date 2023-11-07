@@ -1,4 +1,4 @@
-import Store from "../store"
+import { store } from "../store"
 
 export const GET = 'GET'
 export const POST = 'POST'
@@ -8,7 +8,6 @@ export const DELETE = 'DELETE'
 
 export default class Request {
 
-
   constructor(url) {
     this.base = 'http://localhost:8081'
     this.url = url
@@ -16,7 +15,7 @@ export default class Request {
 
   // Return 'thenable' promise
   async call(parameters = {}, method = GET) {
-    Store.clearErrors()
+    store.clearErrors()
 
     let options = {
       headers: {
@@ -30,16 +29,16 @@ export default class Request {
       options.body = JSON.stringify(parameters)
     }
 
-    Store.setWaitingOnAjax(true)
+    store.setWaitingOnAjax(true)
 
     return await fetch(`${this.base}/${this.url}`, options)
       .then(response => {
-        Store.setWaitingOnAjax(false)
+        store.setWaitingOnAjax(false)
 
         return response.json()
       }).then(response => {
         if (response.errors) {
-          Store.setErrors(response.errors)
+          store.setErrors(response.errors)
         }
 
         return response

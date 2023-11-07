@@ -1,4 +1,6 @@
-export default {
+import { reactive } from 'vue'
+
+export const store = reactive({
   albums: [],
 
   errors: [],
@@ -19,4 +21,4 @@ export default {
   clearErrors() {
     this.errors = []
   },
-}
+})

@@ -38,7 +38,13 @@ func (e *Env) GetAlbumsByArtist(c *gin.Context) {
 		log.Fatalf("failed to get albums by artist")
 	}
 
-	c.IndentedJSON(http.StatusCreated, albums)
+	if len(albums) > 0 {
+		c.IndentedJSON(http.StatusOK, albums)
+
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"errors": "failed to find an album with provided search: " + name})
 }
 
 func (e *Env) getAlbumsRows() ([]models.Album, error) {
@@ -80,7 +86,7 @@ func (e *Env) AddAlbum(c *gin.Context) {
 	requiredParametersKeys := []string{"title", "artist", "price"}
 	for _, value := range requiredParametersKeys {
 		if _, ok := postParameters[value]; !ok {
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "must pass in a '" + value + "'"})
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "must pass in a '" + value + "'"})
 			return
 		}
 	}
@@ -101,7 +107,7 @@ func (e *Env) AddAlbum(c *gin.Context) {
 	lastId, err := result.LastInsertId()
 	if err != nil {
 		log.Fatalf("addAlbum: %v", err)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "failed to create album"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "failed to create album"})
 	} else {
 		album.ID = lastId
 		c.IndentedJSON(http.StatusOK, album)
@@ -123,7 +129,7 @@ func (e *Env) GetAlbumByID(c *gin.Context) {
 	}
 
 	if len(albums) == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+		c.IndentedJSON(http.StatusNotFound, gin.H{"errors": "album not found"})
 	} else {
 		c.IndentedJSON(http.StatusOK, albums)
 	}
@@ -135,7 +141,7 @@ func (e *Env) DeleteAlbum(c *gin.Context) {
 		log.Fatalf("failed to delete album")
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
+	c.IndentedJSON(http.StatusOK, gin.H{"errors": "album successfully removed"})
 }
 
 func (e *Env) UpdateAlbum(c *gin.Context) {
@@ -164,11 +170,11 @@ func (e *Env) UpdateAlbum(c *gin.Context) {
 
 	_, err := e.Db.Exec(dynamicSql, values...)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "could not update album"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "could not update album"})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
+	c.IndentedJSON(http.StatusOK, gin.H{"errors": "album successfully updated"})
 }
 
 func (e *Env) AddRandom(c *gin.Context) {
@@ -190,7 +196,7 @@ func (e *Env) AddRandom(c *gin.Context) {
 	lastId, err := result.LastInsertId()
 	if err != nil {
 		log.Fatalf("addAlbum: %v", err)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "failed to create random album"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "failed to create random album"})
 	} else {
 		album.ID = lastId
 		c.IndentedJSON(http.StatusOK, album)
