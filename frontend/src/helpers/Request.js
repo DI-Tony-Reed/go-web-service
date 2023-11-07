@@ -1,14 +1,14 @@
-import Store from "../store";
+import Store from "../store"
 
 export default class Request {
     constructor(url) {
-        this.base = 'http://localhost:8081';
-        this.url = url;
+        this.base = 'http://localhost:8081'
+        this.url = url
     }
 
     // Return 'thenable' promise
     async call(parameters, method = 'GET') {
-        Store.clearErrors();
+        Store.clearErrors()
 
         let options = {
             headers: {
@@ -16,33 +16,33 @@ export default class Request {
                 'Content-Type': 'application/json'
             },
             method: method,
-        };
-
-        if (parameters) {
-            options.body = JSON.stringify(parameters);
         }
 
-        Store.setWaitingOnAjax(true);
+        if (parameters) {
+            options.body = JSON.stringify(parameters)
+        }
+
+        Store.setWaitingOnAjax(true)
 
         return await fetch(`${ this.base }/${ this.url }`, options)
             .then(response => {
-                Store.setWaitingOnAjax(false);
+                Store.setWaitingOnAjax(false)
 
-                return response.json();
+                return response.json()
             }).then(response => {
                 if (response.errors) {
-                    Store.setErrors(response.errors);
+                    Store.setErrors(response.errors)
                 }
 
-                return response;
-            });
+                return response
+            })
     }
 
     async post(parameters) {
-        return await this.call(parameters, 'POST');
+        return await this.call(parameters, 'POST')
     }
 
     async get(parameters) {
-        return await this.call(parameters, 'GET');
+        return await this.call(parameters, 'GET')
     }
 }
