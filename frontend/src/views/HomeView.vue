@@ -1,5 +1,10 @@
 <template>
   <div>
+    <ul>
+      <li v-for="album in albums">
+        {{album}}
+      </li>
+    </ul>
   </div>
 </template>
 

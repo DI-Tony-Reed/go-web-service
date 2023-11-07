@@ -41,4 +41,8 @@ export default class Request {
     async post(parameters) {
         return await this.call(parameters, 'POST');
     }
+
+    async get(parameters) {
+        return await this.call(parameters, 'GET');
+    }
 }
