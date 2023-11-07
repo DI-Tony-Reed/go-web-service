@@ -1,5 +1,6 @@
 <template>
-
+  <div>
+  </div>
 </template>
 
 <script>
@@ -12,7 +13,7 @@ export default {
 		}
 	},
 	methods: {
-	
+
 	},
 	created() {
 		let request = new Request('albums')
