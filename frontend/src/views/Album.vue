@@ -23,7 +23,9 @@ export default {
   },
   methods: {
     deleteAlbum(id) {
-      this.$emit('deleteAlbum', id)
+      if (confirm("Are you sure?")) {
+        this.$emit('deleteAlbum', id)
+      }
     },
   },
 }
