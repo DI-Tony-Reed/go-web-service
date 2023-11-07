@@ -1,8 +1,9 @@
 <template>
-  <div>
+  <div class="wrapper">
     <Album v-for="album in albums" :album=album></Album>
+
+    <RandomAlbum @randomAdded="addNewAlbum" />
   </div>
-  <RandomAlbum @randomAdded="addNewAlbum" />
 </template>
 
 <script>
@@ -28,3 +29,9 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+  .wrapper {
+    padding: 1rem
+  }
+</style>
