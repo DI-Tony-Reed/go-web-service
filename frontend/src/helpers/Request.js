@@ -53,6 +53,10 @@ export default class Request {
     return await this.call(parameters, PUT)
   }
 
+  async delete(parameters) {
+    return await this.call(parameters, DELETE)
+  }
+
   async get(parameters) {
     return await this.call(parameters, GET)
   }

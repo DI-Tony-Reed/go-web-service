@@ -12,7 +12,11 @@
       </form>
     </div>
 
-    <Album v-for="album in albums" :album=album></Album>
+    <Album
+        v-for="album in albums"
+        :album=album
+        @deleteAlbum="deleteAlbum"
+    ></Album>
 
     <RandomAlbum @randomAdded="addNewAlbum"/>
   </div>
@@ -49,6 +53,12 @@ export default {
         if (typeof data.errors === "undefined") {
           this.albums = data
         }
+      })
+    },
+    deleteAlbum(id) {
+      let request = new Request(`albums/${ id }`)
+      request.delete().then(() => {
+        this.albums = this.albums.filter(album => album.ID !== id)
       })
     },
     getDefaultAlbums() {

@@ -1,12 +1,17 @@
 <template>
-  <div class="card">
-    ID: {{ album.ID }}
-    <br>
-    Title: {{ album.Title }}
-    <br>
-    Artist: {{ album.Artist }}
-    <br>
-    Price: {{ album.Price }}
+  <div class="card d-flex justify-between align-center">
+    <div>
+      ID: {{ album.ID }}
+      <br>
+      Title: {{ album.Title }}
+      <br>
+      Artist: {{ album.Artist }}
+      <br>
+      Price: {{ album.Price }}
+    </div>
+    <div>
+      <button @click.prevent="deleteAlbum(album.ID)">Delete</button>
+    </div>
   </div>
 </template>
 
@@ -15,6 +20,11 @@ export default {
   name: "Album",
   props: {
     album: Object,
+  },
+  methods: {
+    deleteAlbum(id) {
+      this.$emit('deleteAlbum', id)
+    },
   },
 }
 </script>

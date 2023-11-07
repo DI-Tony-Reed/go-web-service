@@ -141,7 +141,7 @@ func (e *Env) DeleteAlbum(c *gin.Context) {
 		log.Fatalf("failed to delete album")
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"errors": "album successfully removed"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
 }
 
 func (e *Env) UpdateAlbum(c *gin.Context) {
@@ -174,7 +174,7 @@ func (e *Env) UpdateAlbum(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"errors": "album successfully updated"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
 }
 
 func (e *Env) AddRandom(c *gin.Context) {
