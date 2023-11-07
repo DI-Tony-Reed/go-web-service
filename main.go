@@ -1,13 +1,14 @@
 package main
 
 import (
-	"log"
-	"os"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"go-web-service/src/rest"
-	"go-web-service/src/utils"
+	"go-web-service/server/rest"
+	"go-web-service/server/utils"
+	"log"
+	"os"
+	"time"
 )
 
 var environment = "development"
@@ -35,6 +36,15 @@ func main() {
 
 	// Setup gin router
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowCredentials: true,
+		AllowMethods:     []string{"GET", "POST", "DELETE", "PUT", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		MaxAge:           12 * time.Hour,
+	}))
 
 	router.GET("/albums", env.GetAlbums)
 	router.GET("/albums/:id", env.GetAlbumByID)
