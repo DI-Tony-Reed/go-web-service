@@ -3,13 +3,12 @@ package rest
 import (
 	"database/sql"
 	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"go-web-service/server/models"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 type Env struct {

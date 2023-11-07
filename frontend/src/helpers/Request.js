@@ -18,7 +18,7 @@ export default class Request {
             method: method,
         }
 
-        if (parameters) {
+        if (parameters && method !== "GET") {
             options.body = JSON.stringify(parameters)
         }
 
