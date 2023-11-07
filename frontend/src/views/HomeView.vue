@@ -1,17 +1,15 @@
 <template>
   <div>
-    <ul>
-      <li v-for="album in albums">
-        {{album}}
-      </li>
-    </ul>
+    <Album v-for="album in albums" :album=album />
   </div>
 </template>
 
 <script>
 import Request from "../helpers/Request";
+import Album from './album.vue'
 
 export default {
+  components: {Album},
 	data() {
 		return {
 			albums: []
