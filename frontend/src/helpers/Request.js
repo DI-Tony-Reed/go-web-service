@@ -7,7 +7,7 @@ export default class Request {
     }
 
     // Return 'thenable' promise
-    async call(parameters, method = 'GET') {
+    async call(parameters = {}, method = 'GET') {
         Store.clearErrors()
 
         let options = {
