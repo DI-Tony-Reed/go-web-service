@@ -4,10 +4,13 @@
 			Spinner.gif :)
 			<br>
 		</div>
-		
 		<div>
+			<div v-if="store.messages" class="mb-2">
+				<ServerMessage :key="message" v-for="message in store.messages" :message="message"></ServerMessage>
+			</div>
+			
 			<div v-if="store.errors" class="mb-2">
-				<Error v-for="error in store.errors" :error="error"></Error>
+				<Error :key="error" v-for="error in store.errors" :error="error"></Error>
 			</div>
 			
 			<RouterView/>
@@ -18,9 +21,10 @@
 <script>
 import {store} from './store'
 import Error from './views/Error.vue'
+import ServerMessage from "@/views/ServerMessage.vue";
 
 export default {
-  components: {Error},
+  components: {ServerMessage, Error},
   data() {
     return {
       store

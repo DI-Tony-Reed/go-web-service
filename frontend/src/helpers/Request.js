@@ -16,6 +16,7 @@ export default class Request {
   // Return 'thenable' promise
   async call(parameters = {}, method = GET) {
     store.clearErrors()
+    store.clearMessages()
 
     let options = {
       headers: {
@@ -39,6 +40,10 @@ export default class Request {
       }).then(response => {
         if (response.errors) {
           store.setErrors(response.errors)
+        }
+
+        if (response.message) {
+          store.setMessages(response.message)
         }
 
         return response

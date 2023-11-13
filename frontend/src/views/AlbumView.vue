@@ -12,8 +12,6 @@
 			</form>
 		</div>
 		
-		<router-view></router-view>
-		
 		<Album
 			v-for="album in store.albums"
 			v-bind:key="album.ID"
