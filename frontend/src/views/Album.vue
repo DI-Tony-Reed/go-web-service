@@ -11,6 +11,7 @@
 		</div>
 		<div>
 			<button @click.prevent="deleteAlbum(album.ID)">Delete</button>
+			<button @click.prevent="editAlbum(album.ID)">Edit</button>
 		</div>
 	</div>
 </template>
@@ -27,6 +28,9 @@ export default {
         this.$emit('deleteAlbum', id)
       }
     },
+    editAlbum(id) {
+      this.$router.push(`/edit/${id}`)
+    }
   },
 }
 </script>

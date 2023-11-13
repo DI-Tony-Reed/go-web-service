@@ -49,6 +49,10 @@ export default class Request {
     return await this.call(parameters, POST)
   }
 
+  async patch(parameters) {
+    return await this.call(parameters, PATCH)
+  }
+
   async put(parameters) {
     return await this.call(parameters, PUT)
   }
