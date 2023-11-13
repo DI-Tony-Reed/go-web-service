@@ -13,7 +13,8 @@
     </div>
 
     <Album
-        v-for="album in albums"
+        v-for="album in store.albums"
+        v-bind:key="album.ID"
         :album=album
         @deleteAlbum="deleteAlbum"
     ></Album>
@@ -32,39 +33,38 @@ export default {
   components: {RandomAlbum, Album},
   data() {
     return {
-      albums: [],
       artistSearch: "",
       store
     }
   },
   methods: {
     addNewAlbum(album) {
-      this.albums.push(album)
+      this.store.albums.push(album)
     },
     searchArtist() {
       if (!this.artistSearch) {
         return
       }
 
-      this.albums = []
+      this.store.albums = []
 
       let request = new Request(`albums/artist/${ encodeURIComponent(this.artistSearch) }`)
       request.get().then(data => {
         if (typeof data.errors === "undefined") {
-          this.albums = data
+          this.store.albums = data
         }
       })
     },
     deleteAlbum(id) {
       let request = new Request(`albums/${ id }`)
       request.delete().then(() => {
-        this.albums = this.albums.filter(album => album.ID !== id)
+        this.store.albums = this.store.albums.filter(album => album.ID !== id)
       })
     },
     getDefaultAlbums() {
       this.artistSearch = ""
       let request = new Request("albums")
-      request.get().then(data => this.albums = data)
+      request.get().then(data => this.store.albums = data)
     },
   },
   created() {

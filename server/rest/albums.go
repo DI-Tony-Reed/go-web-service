@@ -3,12 +3,13 @@ package rest
 import (
 	"database/sql"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/gin-gonic/gin"
-	"go-web-service/server/models"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/gin-gonic/gin"
+	"go-web-service/server/models"
 )
 
 type Env struct {
@@ -28,7 +29,7 @@ func (e *Env) GetAlbums(c *gin.Context) {
 func (e *Env) GetAlbumsByArtist(c *gin.Context) {
 	name := c.Param("artist")
 
-	rows, err := e.Db.Query("SELECT * FROM album WHERE artist = ?", name)
+	rows, err := e.Db.Query(`SELECT * FROM album WHERE artist LIKE CONCAT("%", ? , "%")`, name)
 	if err != nil {
 		log.Fatalf("GetAlbumsByArtist %q: %v", name, err)
 	}
