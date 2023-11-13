@@ -1,4 +1,4 @@
-import { store } from "../store"
+import {store} from "../store"
 
 export const GET = 'GET'
 export const POST = 'POST'

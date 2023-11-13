@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <button @click="addRandom">Add random</button>
-  </div>
+	<div>
+		<button @click="addRandom">Add random</button>
+	</div>
 </template>
 
 <script>

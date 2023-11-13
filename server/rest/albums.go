@@ -6,6 +6,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/gin-gonic/gin"
+	"go-web-service/server/models"
 )
 
 type Env struct {
@@ -152,7 +156,7 @@ func (e *Env) UpdateAlbum(c *gin.Context) {
 		values = append(values, value[0])
 	}
 
-	dynamicSql := "UPDATE album SET "
+	dynamicSql := `UPDATE album SET `
 	for key, value := range keys {
 		dynamicSql += value + " = ?"
 

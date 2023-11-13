@@ -1,7 +1,7 @@
 <template>
-  <div class="error">
-    {{ error }}
-  </div>
+	<div class="error">
+		{{ error }}
+	</div>
 </template>
 
 <script>
@@ -14,8 +14,8 @@ export default {
 </script>
 
 <style scoped>
-  .error {
-    background-color: indianred;
-    border: 2px solid red;
-  }
+.error {
+	background-color: indianred;
+	border: 2px solid red;
+}
 </style>
