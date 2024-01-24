@@ -7,6 +7,8 @@
     - The development container uses Air to watch for files and automatically recompile the application; this container
       will not attempt to run until the MySQL image is running and returns a healthy response
 - `make install`
+- `make watch`
+- Visit `localhost:5173` to interact with the front end
 
 # Preparing a production build
 
