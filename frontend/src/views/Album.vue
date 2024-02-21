@@ -7,7 +7,7 @@
 			<br>
 			Artist: {{ album.Artist }}
 			<br>
-			Price: {{ album.Price }}
+			Price: {{ parseFloat(album.Price).toFixed(2) }}
 		</div>
 		<div>
 			<button @click.prevent="deleteAlbum(album.ID)">Delete</button>
