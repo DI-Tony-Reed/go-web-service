@@ -40,12 +40,7 @@ export default {
     getDefaultAlbums() {
       let request = new Request(`albums/${this.$route.params.id}`)
       request.get().then(data => {
-        this.store.albums = data
-				
-        this.id = data[0].ID
-        this.artist = data[0].Artist
-        this.title = data[0].Title
-        this.price = data[0].Price
+        this.assignProperties(data)
       })
     },
     update() {
@@ -60,13 +55,16 @@ export default {
       let request = new Request(`albums/${this.id}?${urlParameters}`)
 			
       request.patch(parameters).then(data => {
-        this.store.albums = data
-				
-        this.id = data[0].ID
-        this.artist = data[0].Artist
-        this.title = data[0].Title
-        this.price = data[0].Price
+        this.assignProperties(data)
       })
+    },
+    assignProperties(data) {
+      this.store.albums = data
+
+      this.id = data[0].ID
+      this.artist = data[0].Artist
+      this.title = data[0].Title
+      this.price = data[0].Price
     }
   },
   created() {
