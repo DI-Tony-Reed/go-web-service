@@ -1,7 +1,7 @@
 # Prepare node/npm
 FROM node:20.11.1 AS node_base
 
-COPY . .
+COPY . ./app
 
 RUN npm install
 
