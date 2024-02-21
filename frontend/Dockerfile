@@ -1,14 +1,12 @@
 # Prepare node/npm
-FROM node:latest AS node_base
+FROM node:20.11.1 AS node_base
 
-WORKDIR /app
-
-COPY ./ ./
+COPY . .
 
 RUN npm install
 
 RUN npm run build
 
-EXPOSE 8080
+EXPOSE 8000
 
-CMD ["npm", "run", "build"]
+CMD ["npm", "run", "dev"]
