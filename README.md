@@ -4,15 +4,14 @@
   desired environment
 - `docker-compose up`
     - The MySQL container will be built and ran first
-    - The development container uses Air to watch for files and automatically recompile the application; this container
+    - The backend-development container uses Air to watch for files and automatically recompile the application; this container
       will not attempt to run until the MySQL image is running and returns a healthy response
-- `make install`
-- `make watch`
-- Visit `localhost:5173` to interact with the front end
+    - The frontend-development container includes Vite, Vue, and other dependencies and will watch for changes
+- Visit `localhost:8000` to interact with the front end
 
 # Preparing a production build
 
-- `docker exec -it development bash`
+- `docker exec -it backend-development bash`
 - `make build`
 - `exit`
 

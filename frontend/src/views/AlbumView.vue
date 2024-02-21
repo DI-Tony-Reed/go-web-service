@@ -25,7 +25,7 @@
 
 <script>
 import Request from "../helpers/Request";
-import Album from "./album.vue"
+import Album from "./Album.vue"
 import RandomAlbum from "./RandomAlbum.vue"
 import {store} from '@/store'
 
