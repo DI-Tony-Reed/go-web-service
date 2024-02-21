@@ -7,8 +7,6 @@
     - The backend-development container uses Air to watch for files and automatically recompile the application; this container
       will not attempt to run until the MySQL image is running and returns a healthy response
     - The frontend-development container includes Vite, Vue, and other dependencies and will watch for changes
-- `make install`
-- `make watch`
 - Visit `localhost:8000` to interact with the front end
 
 # Preparing a production build
