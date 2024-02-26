@@ -2,6 +2,7 @@
 
 - Copy `.env.example` to `.env.production` and `.env.development` and fill out with the appropriate values based on your
   desired environment
+- Do the same for the `.env.example` file within the `frontend` directory
 - `docker-compose up --build`
     - The MySQL container will be built and ran first
     - The backend-development container uses Air to watch for files and automatically recompile the application; this container

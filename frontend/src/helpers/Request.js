@@ -9,7 +9,7 @@ export const DELETE = 'DELETE'
 export default class Request {
 
   constructor(url) {
-    this.base = 'http://localhost:8081'
+    this.base = localStorage.getItem('applicationUrl')
     this.url = url
   }
 
