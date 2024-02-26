@@ -8,5 +8,8 @@ frontend/node_modules
 .env.production
 .env.development
 
+frontend/.env.development
+frontend/.env.production
+
 # Generated executables
 go-web-service*

@@ -1,4 +1,5 @@
 import {store} from "../store"
+import EnvironmentVariables from './EnvironmentVariables'
 
 export const GET = 'GET'
 export const POST = 'POST'
@@ -9,7 +10,7 @@ export const DELETE = 'DELETE'
 export default class Request {
 
   constructor(url) {
-    this.base = 'http://localhost:8081'
+    this.base = localStorage.getItem('applicationUrl')
     this.url = url
   }
 
