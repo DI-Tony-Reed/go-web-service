@@ -61,10 +61,10 @@ export default {
     assignProperties(data) {
       this.store.albums = data
 
-      this.id = data[0].ID
-      this.artist = data[0].Artist
-      this.title = data[0].Title
-      this.price = data[0].Price
+      this.id = data[0].id
+      this.artist = data[0].artist
+      this.title = data[0].title
+      this.price = data[0].price
     }
   },
   created() {

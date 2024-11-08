@@ -10,8 +10,8 @@
 			Price: {{ parseFloat(album.price).toFixed(2) }}
 		</div>
 		<div>
-			<button @click.prevent="deleteAlbum(album.ID)">Delete</button>
-			<button @click.prevent="editAlbum(album.ID)">Edit</button>
+			<button @click.prevent="deleteAlbum(album.id)">Delete</button>
+			<button @click.prevent="editAlbum(album.id)">Edit</button>
 		</div>
 	</div>
 </template>
