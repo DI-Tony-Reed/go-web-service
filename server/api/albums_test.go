@@ -423,3 +423,140 @@ func TestAddAlbum_LastInsertIdError(t *testing.T) {
 		t.Errorf("There were unfulfilled expectations: %v", err)
 	}
 }
+
+func TestGetAlbumByID(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
+		ExpectQuery().
+		WithArgs("1").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "artist", "price"}).
+			AddRow(1, "Album1", "Artist1", 10.99))
+
+	albums := &Albums{Db: db}
+
+	req, err := http.NewRequest(http.MethodGet, "/albums/1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.GetAlbumByID)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	expected := `[{"id":1,"title":"Album1","artist":"Artist1","price":10.99}]`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestGetAlbumByID_Errors(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	albums := &Albums{Db: db}
+
+	// Prepare error case
+	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).WillReturnError(fmt.Errorf("prepare error"))
+
+	req, err := http.NewRequest(http.MethodGet, "/albums/1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.GetAlbumByID)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"GetAlbumsByArtist prepare prepare error"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+
+	// Query error case
+	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
+		ExpectQuery().
+		WithArgs("1").
+		WillReturnError(fmt.Errorf("query error"))
+
+	req, err = http.NewRequest(http.MethodGet, "/albums/1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(albums.GetAlbumByID)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected = `{"errors":"GetAlbumsByArtist query error"}`
+	actual = strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+
+	// No albums found case
+	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
+		ExpectQuery().
+		WithArgs("999").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "artist", "price"}))
+
+	req, err = http.NewRequest(http.MethodGet, "/albums/999", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(albums.GetAlbumByID)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusNotFound)
+	}
+
+	expected = `{"errors":"album not found"}`
+	actual = strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}

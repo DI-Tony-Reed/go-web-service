@@ -138,16 +138,24 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 
 func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/albums/")
-	rows, err := e.Db.Query("SELECT * FROM album WHERE id = ?", id)
 
+	stmt, err := e.Db.Prepare(`SELECT * FROM album WHERE id = ?`)
 	if err != nil {
-		ServeJSONError(w, fmt.Sprintf("getAlbumsByID %v", err), http.StatusInternalServerError)
+		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist prepare %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	albums, err := handleAlbumRows(rows)
-
 	if err != nil {
+		ServeJSONError(w, "failed to get album by id", http.StatusInternalServerError)
+		return
 	}
 
 	if len(albums) == 0 {
