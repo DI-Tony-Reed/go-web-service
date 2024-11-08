@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -182,25 +181,37 @@ func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	var keys []string
 	var values []any
 
-	for key, value := range parameters {
-		keys = append(keys, key)
-		values = append(values, value[0])
+	if title, ok := parameters["title"]; ok {
+		keys = append(keys, "title")
+		values = append(values, title[0])
+	}
+	if artist, ok := parameters["artist"]; ok {
+		keys = append(keys, "artist")
+		values = append(values, artist[0])
+	}
+	if price, ok := parameters["price"]; ok {
+		keys = append(keys, "price")
+		values = append(values, price[0])
 	}
 
 	dynamicSql := `UPDATE album SET `
-	for key, value := range keys {
-		dynamicSql += value + " = ?"
-
-		if (key + 1) < len(keys) {
-			dynamicSql += ", "
-		} else {
-			dynamicSql += " "
+	for i, key := range keys {
+		dynamicSql += key + ` = ?`
+		if i < len(keys)-1 {
+			dynamicSql += `, `
 		}
 	}
-	dynamicSql = dynamicSql + "WHERE id = ?"
+	dynamicSql += ` WHERE id = ?`
 	values = append(values, id)
 
-	_, err := e.Db.Exec(dynamicSql, values...)
+	stmt, err := e.Db.Prepare(dynamicSql)
+	if err != nil {
+		ServeJSONError(w, fmt.Sprintf("UpdateAlbum prepare %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(values...)
 	if err != nil {
 		ServeJSONError(w, "could not update album", http.StatusBadRequest)
 		return
@@ -220,14 +231,22 @@ func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
 		Price:  price,
 	}
 
-	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
+	stmt, err := e.Db.Prepare(`INSERT INTO album (title, artist, price) VALUES (?, ?, ?)`)
 	if err != nil {
-		log.Fatalf("AddAlbum: %v", err)
+		ServeJSONError(w, fmt.Sprintf("UpdateAlbum prepare %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(album.Title, album.Artist, album.Price)
+	if err != nil {
+		ServeJSONError(w, "failed to create random album", http.StatusInternalServerError)
+		return
 	}
 
 	lastId, err := result.LastInsertId()
 	if err != nil {
-		ServeJSON(w, map[string]any{"errors": "failed to create album"}, http.StatusInternalServerError)
+		ServeJSON(w, map[string]any{"errors": "failed to create random album"}, http.StatusInternalServerError)
 	} else {
 		album.ID = lastId
 		ServeJSON(w, album, http.StatusOK)

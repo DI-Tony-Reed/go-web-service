@@ -637,3 +637,260 @@ func TestDeleteAlbum_Errors(t *testing.T) {
 		t.Errorf("There were unfulfilled expectations: %v", err)
 	}
 }
+
+func TestUpdateAlbum(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare("UPDATE album SET title = \\?, artist = \\?, price = \\? WHERE id = \\?").
+		ExpectExec().
+		WithArgs("UpdatedTitle", "UpdatedArtist", "20", "1").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	albums := &Albums{Db: db}
+
+	req, err := http.NewRequest(http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.UpdateAlbum)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	expected := `{"message":"album successfully updated"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestUpdateAlbum_Errors(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	albums := &Albums{Db: db}
+
+	// Prepare error case
+	mock.ExpectPrepare("UPDATE album SET title = \\?, artist = \\?, price = \\? WHERE id = \\?").
+		WillReturnError(fmt.Errorf("prepare error"))
+
+	req, err := http.NewRequest(http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20.99", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.UpdateAlbum)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"UpdateAlbum prepare prepare error"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+
+	// Exec error case
+	mock.ExpectPrepare("UPDATE album SET title = \\?, artist = \\?, price = \\? WHERE id = \\?").
+		ExpectExec().
+		WithArgs("UpdatedTitle", "UpdatedArtist", "20.99", "1").
+		WillReturnError(fmt.Errorf("exec error"))
+
+	req, err = http.NewRequest(http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20.99", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(albums.UpdateAlbum)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	expected = `{"errors":"could not update album"}`
+	actual = strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestAddRandom(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
+		ExpectExec().
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	albums := &Albums{Db: db}
+
+	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.AddRandom)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestAddRandom_Errors(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	albums := &Albums{Db: db}
+
+	// Exec error case
+	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
+		ExpectExec().
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnError(fmt.Errorf("exec error"))
+
+	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.AddRandom)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"failed to create random album"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestAddRandom_PrepareError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	albums := &Albums{Db: db}
+
+	// Prepare error case
+	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
+		WillReturnError(fmt.Errorf("prepare error"))
+
+	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.AddRandom)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"UpdateAlbum prepare prepare error"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestAddRandom_LastInsertIdError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	albums := &Albums{Db: db}
+
+	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
+		ExpectExec().
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("last insert id error")))
+
+	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.AddRandom)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"failed to create random album"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
