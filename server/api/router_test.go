@@ -71,6 +71,7 @@ func TestSetupRouter(t *testing.T) {
 		{method: http.MethodDelete, url: "/albums/1", expectedCode: http.StatusOK},
 		{method: http.MethodPut, url: "/albums/random", expectedCode: http.StatusCreated},
 		{method: http.MethodGet, url: "/albums/artist/1", expectedCode: http.StatusOK},
+		{method: http.MethodOptions, url: "/albums", expectedCode: http.StatusNoContent},
 	}
 
 	for _, tt := range tests {
