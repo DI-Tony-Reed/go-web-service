@@ -33,6 +33,11 @@ func corsMiddleware(h http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length")
 
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
 		h.ServeHTTP(w, r)
 	})
 }
