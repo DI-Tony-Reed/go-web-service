@@ -6,6 +6,9 @@ install:
 watch:
 	cd frontend && npm run dev
 
+update_go_dependencies:
+	go get -u ./...
+
 build:
 	GOARCH=amd64 GOOS=darwin go build -ldflags="-X 'main.environment=production'" -o bin/${BINARY_NAME}-darwin
 	GOARCH=amd64 GOOS=linux go build -ldflags="-X 'main.environment=production'" -o bin/${BINARY_NAME}-linux
