@@ -3,27 +3,28 @@ package rest
 import (
 	"database/sql"
 	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"go-web-service/server/models"
+	"log"
+	"net/http"
 )
 
 type Env struct {
 	Db *sql.DB
 }
 
-func (e *Env) GetAlbums(c *gin.Context) {
+func (e *Env) GetAlbums(w http.ResponseWriter, req *http.Request) {
 	albums, err := e.getAlbumsRows()
 
 	if err != nil {
-		fmt.Printf("GetAlbums %v", err)
+		http.Error(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
 	}
 
-	c.IndentedJSON(http.StatusOK, albums)
+	err = ServeJSON(w, albums)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
+	}
 }
 
 func (e *Env) GetAlbumsByArtist(c *gin.Context) {
@@ -81,38 +82,38 @@ func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	return albums, nil
 }
 
-func (e *Env) AddAlbum(c *gin.Context) {
-	postParameters := c.Request.URL.Query()
+func (e *Env) AddAlbum(w http.ResponseWriter, req *http.Request) {
+	//postParameters := c.Request.URL.Query()
 
-	requiredParametersKeys := []string{"title", "artist", "price"}
-	for _, value := range requiredParametersKeys {
-		if _, ok := postParameters[value]; !ok {
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "must pass in a '" + value + "'"})
-			return
-		}
-	}
+	//requiredParametersKeys := []string{"title", "artist", "price"}
+	//for _, value := range requiredParametersKeys {
+	//	if _, ok := postParameters[value]; !ok {
+	//c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "must pass in a '" + value + "'"})
+	//return
+	//}
+	//}
 
-	price, _ := strconv.ParseFloat(postParameters.Get("price"), 32)
-
-	album := models.Album{
-		Title:  postParameters.Get("title"),
-		Artist: postParameters.Get("artist"),
-		Price:  float32(price),
-	}
-
-	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
-	if err != nil {
-		log.Fatalf("AddAlbum: %v", err)
-	}
-
-	lastId, err := result.LastInsertId()
-	if err != nil {
-		log.Fatalf("addAlbum: %v", err)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "failed to create album"})
-	} else {
-		album.ID = lastId
-		c.IndentedJSON(http.StatusOK, album)
-	}
+	//price, _ := strconv.ParseFloat(postParameters.Get("price"), 32)
+	//
+	//album := models.Album{
+	//	Title:  postParameters.Get("title"),
+	//	Artist: postParameters.Get("artist"),
+	//	Price:  float32(price),
+	//}
+	//
+	//result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
+	//if err != nil {
+	//	log.Fatalf("AddAlbum: %v", err)
+	//}
+	//
+	//lastId, err := result.LastInsertId()
+	//if err != nil {
+	//	log.Fatalf("addAlbum: %v", err)
+	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "failed to create album"})
+	//} else {
+	//	album.ID = lastId
+	//	c.IndentedJSON(http.StatusOK, album)
+	//}
 }
 
 func (e *Env) GetAlbumByID(c *gin.Context) {
@@ -136,52 +137,52 @@ func (e *Env) GetAlbumByID(c *gin.Context) {
 	}
 }
 
-func (e *Env) DeleteAlbum(c *gin.Context) {
-	_, err := e.Db.Exec("DELETE FROM album WHERE id = ?", c.Param("id"))
-	if err != nil {
-		log.Fatalf("failed to delete album")
-	}
-
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
+func (e *Env) DeleteAlbum(w http.ResponseWriter, req *http.Request) {
+	//_, err := e.Db.Exec("DELETE FROM album WHERE id = ?", c.Param("id"))
+	//if err != nil {
+	//	log.Fatalf("failed to delete album")
+	//}
+	//
+	//c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
 }
 
-func (e *Env) UpdateAlbum(c *gin.Context) {
-	parameters := c.Request.URL.Query()
+func (e *Env) UpdateAlbum(w http.ResponseWriter, req *http.Request) {
+	//parameters := c.Request.URL.Query()
 
-	var keys []string
-	var values []any
-
-	for key, value := range parameters {
-		keys = append(keys, key)
-		values = append(values, value[0])
-	}
-
-	dynamicSql := `UPDATE album SET `
-	for key, value := range keys {
-		dynamicSql += value + " = ?"
-
-		if (key + 1) < len(keys) {
-			dynamicSql += ", "
-		} else {
-			dynamicSql += " "
-		}
-	}
-	dynamicSql = dynamicSql + "WHERE id = ?"
-	values = append(values, c.Param("id"))
-
-	_, err := e.Db.Exec(dynamicSql, values...)
-	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "could not update album"})
-		return
-	}
-
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
+	//var keys []string
+	//var values []any
+	//
+	//for key, value := range parameters {
+	//	keys = append(keys, key)
+	//	values = append(values, value[0])
+	//}
+	//
+	//dynamicSql := `UPDATE album SET `
+	//for key, value := range keys {
+	//	dynamicSql += value + " = ?"
+	//
+	//	if (key + 1) < len(keys) {
+	//		dynamicSql += ", "
+	//	} else {
+	//		dynamicSql += " "
+	//	}
+	//}
+	//dynamicSql = dynamicSql + "WHERE id = ?"
+	//values = append(values, c.Param("id"))
+	//
+	//_, err := e.Db.Exec(dynamicSql, values...)
+	//if err != nil {
+	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "could not update album"})
+	//	return
+	//}
+	//
+	//c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
 }
 
 func (e *Env) AddRandom(c *gin.Context) {
 	name := gofakeit.Name()
 	title := gofakeit.Slogan()
-	price := gofakeit.Float32Range(1.00, 50.00)
+	price := gofakeit.Float32Range(1, 100)
 
 	album := models.Album{
 		Title:  title,

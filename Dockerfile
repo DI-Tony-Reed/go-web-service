@@ -1,5 +1,5 @@
 # Build the application from source
-FROM golang:1.22-bullseye AS build-stage
+FROM golang:1.23-bullseye AS build-stage
 
 COPY go.mod go.sum ./
 RUN go mod download
