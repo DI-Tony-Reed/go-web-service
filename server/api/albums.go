@@ -20,8 +20,12 @@ type Albums struct {
 	Db *sql.DB
 }
 
-func (e *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
-	albums, err := e.getAlbumsRows()
+func (a *Albums) GetHandleAlbumRows(rows *sql.Rows) ([]Album, error) {
+	return handleAlbumRows(rows)
+}
+
+func (a *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
+	albums, err := a.getAlbumsRows()
 
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
@@ -31,11 +35,11 @@ func (e *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, albums, http.StatusOK)
 }
 
-func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
+func (a *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/albums/artist/")
 	name = "%" + name + "%"
 
-	stmt, err := e.Db.Prepare(`SELECT * FROM album WHERE artist LIKE ?`)
+	stmt, err := a.Db.Prepare(`SELECT * FROM album WHERE artist LIKE ?`)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist prepare %v", err), http.StatusInternalServerError)
 		return
@@ -48,7 +52,7 @@ func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	albums, err := handleAlbumRows(rows)
+	albums, err := a.GetHandleAlbumRows(rows)
 	if err != nil {
 		ServeJSONError(w, "failed to get albums by artist", http.StatusInternalServerError)
 		return
@@ -62,17 +66,17 @@ func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 	ServeJSONError(w, fmt.Sprintf("failed to find an album with provided search: %v", name), http.StatusNotFound)
 }
 
-func (e *Albums) getAlbumsRows() ([]Album, error) {
-	rows, err := e.Db.Query("SELECT * FROM album")
+func (a *Albums) getAlbumsRows() ([]Album, error) {
+	rows, err := a.Db.Query("SELECT * FROM album")
 
 	if err != nil {
 		return nil, fmt.Errorf("handleAlbumRows %v", err)
 	}
 
-	return handleAlbumRows(rows)
+	return a.GetHandleAlbumRows(rows)
 }
 
-func handleAlbumRows(rows *sql.Rows) ([]Album, error) {
+var handleAlbumRows = func(rows *sql.Rows) ([]Album, error) {
 	// Albums slice to hold db rows
 	var albums []Album
 
@@ -95,7 +99,7 @@ func handleAlbumRows(rows *sql.Rows) ([]Album, error) {
 	return albums, nil
 }
 
-func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
+func (a *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 	parameters := r.URL.Query()
 
 	requiredKeys := []string{"title", "artist", "price"}
@@ -114,7 +118,7 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 		Price:  float32(price),
 	}
 
-	stmt, err := e.Db.Prepare(`INSERT INTO album (title, artist, price) VALUES (?, ?, ?)`)
+	stmt, err := a.Db.Prepare(`INSERT INTO album (title, artist, price) VALUES (?, ?, ?)`)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("AddAlbum prepare %v", err), http.StatusInternalServerError)
 		return
@@ -135,10 +139,10 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
+func (a *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/albums/")
 
-	stmt, err := e.Db.Prepare(`SELECT * FROM album WHERE id = ?`)
+	stmt, err := a.Db.Prepare(`SELECT * FROM album WHERE id = ?`)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist prepare %v", err), http.StatusInternalServerError)
 		return
@@ -151,7 +155,7 @@ func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	albums, err := handleAlbumRows(rows)
+	albums, err := a.GetHandleAlbumRows(rows)
 	if err != nil {
 		ServeJSONError(w, "failed to get album by id", http.StatusInternalServerError)
 		return
@@ -164,8 +168,8 @@ func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (e *Albums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
-	_, err := e.Db.Exec("DELETE FROM album WHERE id = ? LIMIT 1", strings.TrimPrefix(r.URL.Path, "/albums/"))
+func (a *Albums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
+	_, err := a.Db.Exec("DELETE FROM album WHERE id = ? LIMIT 1", strings.TrimPrefix(r.URL.Path, "/albums/"))
 	if err != nil {
 		ServeJSONError(w, "could not delete album", http.StatusInternalServerError)
 		return
@@ -174,7 +178,7 @@ func (e *Albums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, map[string]any{"message": "album successfully removed"}, http.StatusOK)
 }
 
-func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
+func (a *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	parameters := r.URL.Query()
 	id := strings.TrimPrefix(r.URL.Path, "/albums/")
 
@@ -204,7 +208,7 @@ func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	dynamicSql += ` WHERE id = ?`
 	values = append(values, id)
 
-	stmt, err := e.Db.Prepare(dynamicSql)
+	stmt, err := a.Db.Prepare(dynamicSql)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("UpdateAlbum prepare %v", err), http.StatusInternalServerError)
 		return
@@ -220,7 +224,7 @@ func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, map[string]any{"message": "album successfully updated"}, http.StatusOK)
 }
 
-func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
+func (a *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
 	name := gofakeit.Name()
 	title := gofakeit.Slogan()
 	price := gofakeit.Float32Range(1, 100)
@@ -231,7 +235,7 @@ func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
 		Price:  price,
 	}
 
-	stmt, err := e.Db.Prepare(`INSERT INTO album (title, artist, price) VALUES (?, ?, ?)`)
+	stmt, err := a.Db.Prepare(`INSERT INTO album (title, artist, price) VALUES (?, ?, ?)`)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("UpdateAlbum prepare %v", err), http.StatusInternalServerError)
 		return

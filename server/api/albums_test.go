@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -116,6 +117,54 @@ func TestGetAlbumsByArtist(t *testing.T) {
 	}
 
 	expected := `[{"id":1,"title":"Album1","artist":"Artist1","price":10.99},{"id":2,"title":"Album2","artist":"Artist2","price":12.99}]`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestGetAlbumsByArtist_HandleAlbumRowsError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
+		ExpectQuery().
+		WithArgs("%Artist1%").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "artist", "price"}).
+			AddRow(1, "Album1", "Artist1", 10.99).
+			AddRow(2, "Album2", "Artist2", 12.99))
+
+	albums := &Albums{Db: db}
+
+	// Mock the handleAlbumRows function to return an error
+	originalHandleAlbumRows := handleAlbumRows
+	handleAlbumRows = func(rows *sql.Rows) ([]Album, error) {
+		return nil, fmt.Errorf("mocked error")
+	}
+	defer func() { handleAlbumRows = originalHandleAlbumRows }() // Reset after test
+
+	req, err := http.NewRequest(http.MethodGet, "/albums/artist/Artist1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.GetAlbumsByArtist)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"failed to get albums by artist"}`
 	actual := strings.TrimSpace(rr.Body.String())
 	if actual != expected {
 		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
@@ -454,6 +503,53 @@ func TestGetAlbumByID(t *testing.T) {
 	}
 
 	expected := `[{"id":1,"title":"Album1","artist":"Artist1","price":10.99}]`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestGetAlbumByID_HandleAlbumRowsError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
+		ExpectQuery().
+		WithArgs("1").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "artist", "price"}).
+			AddRow(1, "Album1", "Artist1", 10.99))
+
+	albums := &Albums{Db: db}
+
+	// Mock the handleAlbumRows function to return an error
+	originalHandleAlbumRows := handleAlbumRows
+	handleAlbumRows = func(rows *sql.Rows) ([]Album, error) {
+		return nil, fmt.Errorf("mocked error")
+	}
+	defer func() { handleAlbumRows = originalHandleAlbumRows }() // Reset after test
+
+	req, err := http.NewRequest(http.MethodGet, "/albums/1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.GetAlbumByID)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"failed to get album by id"}`
 	actual := strings.TrimSpace(rr.Body.String())
 	if actual != expected {
 		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)

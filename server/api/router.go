@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 )
@@ -13,6 +14,7 @@ type AlbumsInterface interface {
 	DeleteAlbum(w http.ResponseWriter, r *http.Request)
 	AddRandom(w http.ResponseWriter, r *http.Request)
 	GetAlbumsByArtist(w http.ResponseWriter, r *http.Request)
+	GetHandleAlbumRows(rows *sql.Rows) ([]Album, error)
 }
 
 func ServeJSON(w http.ResponseWriter, data any, statusCode int) {

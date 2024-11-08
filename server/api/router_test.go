@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -8,6 +9,10 @@ import (
 )
 
 type MockRouterAlbums struct{}
+
+func (m *MockRouterAlbums) GetHandleAlbumRows(rows *sql.Rows) ([]Album, error) {
+	return []Album{}, nil
+}
 
 func (m *MockRouterAlbums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, []string{"Album1", "Album2"}, http.StatusOK)
