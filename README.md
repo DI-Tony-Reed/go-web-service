@@ -1,5 +1,5 @@
 [![Tests](https://github.com/DI-Tony-Reed/go-web-service/actions/workflows/tests.yml/badge.svg)](https://github.com/DI-Tony-Reed/go-web-service/actions/workflows/tests.yml)
-![Coverage Badge](https://img.shields.io/badge/Coverage-87.8%25-green.svg)
+![Coverage Badge](https://img.shields.io/badge/Coverage-91.6%25-brightgreen.svg)
 
 # First time setup
 
