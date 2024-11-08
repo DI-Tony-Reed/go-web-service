@@ -1,14 +1,21 @@
-package rest
+package api
 
 import (
 	"database/sql"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"go-web-service/server/models"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
+
+type Album struct {
+	ID     int64   `json:"id"`
+	Title  string  `json:"title"`
+	Artist string  `json:"artist"`
+	Price  float32 `json:"price"`
+}
 
 type Albums struct {
 	Db *sql.DB
@@ -55,7 +62,7 @@ func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (e *Albums) getAlbumsRows() ([]models.Album, error) {
+func (e *Albums) getAlbumsRows() ([]Album, error) {
 	rows, err := e.Db.Query("SELECT * FROM album")
 
 	if err != nil {
@@ -65,15 +72,15 @@ func (e *Albums) getAlbumsRows() ([]models.Album, error) {
 	return handleAlbumRows(rows)
 }
 
-func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
+func handleAlbumRows(rows *sql.Rows) ([]Album, error) {
 	// Albums slice to hold db rows
-	var albums []models.Album
+	var albums []Album
 
 	defer rows.Close()
 
 	// Loop rows using Scan to assign to struct fields
 	for rows.Next() {
-		var album models.Album
+		var album Album
 		if err := rows.Scan(&album.ID, &album.Title, &album.Artist, &album.Price); err != nil {
 			return nil, fmt.Errorf("handleAlbumRows %v", err)
 		}
@@ -88,38 +95,46 @@ func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	return albums, nil
 }
 
-func (e *Albums) AddAlbum(w http.ResponseWriter, req *http.Request) {
-	//postParameters := c.Request.URL.Query()
+func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
+	parameters := r.URL.Query()
 
-	//requiredParametersKeys := []string{"title", "artist", "price"}
-	//for _, value := range requiredParametersKeys {
-	//	if _, ok := postParameters[value]; !ok {
-	//c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "must pass in a '" + value + "'"})
-	//return
-	//}
-	//}
+	requiredKeys := []string{"title", "artist", "price"}
+	for _, value := range requiredKeys {
+		if _, ok := parameters[value]; !ok {
+			err := ServeJSON(w, map[string]any{"errors": "must pass in a '" + value + "'"}, http.StatusBadRequest)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
+			}
+			return
+		}
+	}
 
-	//price, _ := strconv.ParseFloat(postParameters.Get("price"), 32)
-	//
-	//album := models.Album{
-	//	Title:  postParameters.Get("title"),
-	//	Artist: postParameters.Get("artist"),
-	//	Price:  float32(price),
-	//}
-	//
-	//result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
-	//if err != nil {
-	//	log.Fatalf("AddAlbum: %v", err)
-	//}
-	//
-	//lastId, err := result.LastInsertId()
-	//if err != nil {
-	//	log.Fatalf("addAlbum: %v", err)
-	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "failed to create album"})
-	//} else {
-	//	album.ID = lastId
-	//	c.IndentedJSON(http.StatusOK, album)
-	//}
+	price, _ := strconv.ParseFloat(parameters.Get("price"), 32)
+
+	album := Album{
+		Title:  parameters.Get("title"),
+		Artist: parameters.Get("artist"),
+		Price:  float32(price),
+	}
+
+	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
+	if err != nil {
+		log.Fatalf("AddAlbum: %v", err)
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		err := ServeJSON(w, map[string]any{"errors": "failed to create album"}, http.StatusBadRequest)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
+		}
+	} else {
+		album.ID = lastId
+		err := ServeJSON(w, album, http.StatusOK)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
+		}
+	}
 }
 
 func (e *Albums) GetAlbumByID(w http.ResponseWriter, req *http.Request) {
@@ -203,7 +218,7 @@ func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
 	title := gofakeit.Slogan()
 	price := gofakeit.Float32Range(1, 100)
 
-	album := models.Album{
+	album := Album{
 		Title:  title,
 		Artist: name,
 		Price:  price,
