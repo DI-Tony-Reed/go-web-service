@@ -12,4 +12,4 @@ frontend/.env.development
 frontend/.env.production
 
 # Generated executables
-go-web-service*
+bin/
