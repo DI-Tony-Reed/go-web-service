@@ -560,3 +560,80 @@ func TestGetAlbumByID_Errors(t *testing.T) {
 		t.Errorf("There were unfulfilled expectations: %v", err)
 	}
 }
+
+func TestDeleteAlbum(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec("DELETE FROM album WHERE id = \\? LIMIT 1").
+		WithArgs("1").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	albums := &Albums{Db: db}
+
+	req, err := http.NewRequest(http.MethodDelete, "/albums/1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.DeleteAlbum)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	expected := `{"message":"album successfully removed"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestDeleteAlbum_Errors(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open mock database: %v", err)
+	}
+	defer db.Close()
+
+	albums := &Albums{Db: db}
+
+	// Exec error case
+	mock.ExpectExec("DELETE FROM album WHERE id = \\? LIMIT 1").
+		WithArgs("1").
+		WillReturnError(fmt.Errorf("exec error"))
+
+	req, err := http.NewRequest(http.MethodDelete, "/albums/1", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(albums.DeleteAlbum)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	expected := `{"errors":"could not delete album"}`
+	actual := strings.TrimSpace(rr.Body.String())
+	if actual != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", actual, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %v", err)
+	}
+}
