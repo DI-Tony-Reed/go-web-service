@@ -4,52 +4,58 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/gin-gonic/gin"
 	"go-web-service/server/models"
 	"log"
 	"net/http"
+	"strings"
 )
 
-type Env struct {
+type Albums struct {
 	Db *sql.DB
 }
 
-func (e *Env) GetAlbums(w http.ResponseWriter, req *http.Request) {
+func (e *Albums) GetAlbums(w http.ResponseWriter, req *http.Request) {
 	albums, err := e.getAlbumsRows()
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
 	}
 
-	err = ServeJSON(w, albums)
+	err = ServeJSON(w, albums, http.StatusOK)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
 	}
 }
 
-func (e *Env) GetAlbumsByArtist(c *gin.Context) {
-	name := c.Param("artist")
+func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, req *http.Request) {
+	name := strings.TrimPrefix(req.URL.Path, "/albums/artist/")
 
 	rows, err := e.Db.Query(`SELECT * FROM album WHERE artist LIKE CONCAT('%', ?, '%')`, name)
 	if err != nil {
-		log.Fatalf("GetAlbumsByArtist %q: %v", name, err)
+		http.Error(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
 	}
 
 	albums, err := handleAlbumRows(rows)
 	if err != nil {
-		log.Fatalf("failed to get albums by artist")
+		http.Error(w, "failed to get albums by artist", http.StatusInternalServerError)
 	}
 
 	if len(albums) > 0 {
-		c.IndentedJSON(http.StatusOK, albums)
+		err := ServeJSON(w, albums, http.StatusOK)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
+		}
 
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"errors": "failed to find an album with provided search: " + name})
+	err = ServeJSON(w, map[string]any{"errors": "failed to find an album with provided search: " + name}, http.StatusNotFound)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
+	}
 }
 
-func (e *Env) getAlbumsRows() ([]models.Album, error) {
+func (e *Albums) getAlbumsRows() ([]models.Album, error) {
 	rows, err := e.Db.Query("SELECT * FROM album")
 
 	if err != nil {
@@ -82,7 +88,7 @@ func handleAlbumRows(rows *sql.Rows) ([]models.Album, error) {
 	return albums, nil
 }
 
-func (e *Env) AddAlbum(w http.ResponseWriter, req *http.Request) {
+func (e *Albums) AddAlbum(w http.ResponseWriter, req *http.Request) {
 	//postParameters := c.Request.URL.Query()
 
 	//requiredParametersKeys := []string{"title", "artist", "price"}
@@ -116,8 +122,8 @@ func (e *Env) AddAlbum(w http.ResponseWriter, req *http.Request) {
 	//}
 }
 
-func (e *Env) GetAlbumByID(c *gin.Context) {
-	id := c.Param("id")
+func (e *Albums) GetAlbumByID(w http.ResponseWriter, req *http.Request) {
+	id := strings.TrimPrefix(req.URL.Path, "/albums/")
 	rows, err := e.Db.Query("SELECT * FROM album WHERE id = ?", id)
 
 	if err != nil {
@@ -131,13 +137,19 @@ func (e *Env) GetAlbumByID(c *gin.Context) {
 	}
 
 	if len(albums) == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"errors": "album not found"})
+		err := ServeJSON(w, map[string]any{"errors": "album not found"}, http.StatusNotFound)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("GetAlbumByID %v", err), http.StatusInternalServerError)
+		}
 	} else {
-		c.IndentedJSON(http.StatusOK, albums)
+		err := ServeJSON(w, albums, http.StatusOK)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("GetAlbumByID %v", err), http.StatusInternalServerError)
+		}
 	}
 }
 
-func (e *Env) DeleteAlbum(w http.ResponseWriter, req *http.Request) {
+func (e *Albums) DeleteAlbum(w http.ResponseWriter, req *http.Request) {
 	//_, err := e.Db.Exec("DELETE FROM album WHERE id = ?", c.Param("id"))
 	//if err != nil {
 	//	log.Fatalf("failed to delete album")
@@ -146,40 +158,47 @@ func (e *Env) DeleteAlbum(w http.ResponseWriter, req *http.Request) {
 	//c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
 }
 
-func (e *Env) UpdateAlbum(w http.ResponseWriter, req *http.Request) {
-	//parameters := c.Request.URL.Query()
+func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
+	parameters := r.URL.Query()
+	id := strings.TrimPrefix(r.URL.Path, "/albums/")
 
-	//var keys []string
-	//var values []any
-	//
-	//for key, value := range parameters {
-	//	keys = append(keys, key)
-	//	values = append(values, value[0])
-	//}
-	//
-	//dynamicSql := `UPDATE album SET `
-	//for key, value := range keys {
-	//	dynamicSql += value + " = ?"
-	//
-	//	if (key + 1) < len(keys) {
-	//		dynamicSql += ", "
-	//	} else {
-	//		dynamicSql += " "
-	//	}
-	//}
-	//dynamicSql = dynamicSql + "WHERE id = ?"
-	//values = append(values, c.Param("id"))
-	//
-	//_, err := e.Db.Exec(dynamicSql, values...)
-	//if err != nil {
-	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "could not update album"})
-	//	return
-	//}
-	//
-	//c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully updated"})
+	var keys []string
+	var values []any
+
+	for key, value := range parameters {
+		keys = append(keys, key)
+		values = append(values, value[0])
+	}
+
+	dynamicSql := `UPDATE album SET `
+	for key, value := range keys {
+		dynamicSql += value + " = ?"
+
+		if (key + 1) < len(keys) {
+			dynamicSql += ", "
+		} else {
+			dynamicSql += " "
+		}
+	}
+	dynamicSql = dynamicSql + "WHERE id = ?"
+	values = append(values, id)
+
+	_, err := e.Db.Exec(dynamicSql, values...)
+	if err != nil {
+		err := ServeJSON(w, map[string]any{"errors": "could not update album", "error": err}, http.StatusBadRequest)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("UpdateAlbum %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	err = ServeJSON(w, map[string]any{"message": "album successfully updated"}, http.StatusOK)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("UpdateAlbum %v", err), http.StatusInternalServerError)
+	}
 }
 
-func (e *Env) AddRandom(c *gin.Context) {
+func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
 	name := gofakeit.Name()
 	title := gofakeit.Slogan()
 	price := gofakeit.Float32Range(1, 100)
@@ -197,10 +216,15 @@ func (e *Env) AddRandom(c *gin.Context) {
 
 	lastId, err := result.LastInsertId()
 	if err != nil {
-		log.Fatalf("addAlbum: %v", err)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"errors": "failed to create random album"})
+		err := ServeJSON(w, map[string]any{"errors": "failed to create album"}, http.StatusInternalServerError)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("AddRandom %v", err), http.StatusInternalServerError)
+		}
 	} else {
 		album.ID = lastId
-		c.IndentedJSON(http.StatusOK, album)
+		err := ServeJSON(w, album, http.StatusOK)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("AddRandom %v", err), http.StatusInternalServerError)
+		}
 	}
 }

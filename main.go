@@ -29,19 +29,46 @@ func init() {
 
 func main() {
 	db := utils.DatabaseInit()
-	env := &rest.Env{Db: db}
+	albums := &rest.Albums{Db: db}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/albums", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			env.GetAlbums(w, r)
+			albums.GetAlbums(w, r)
 		case http.MethodPut:
-			env.AddAlbum(w, r)
+			albums.AddAlbum(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/albums/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			albums.GetAlbumByID(w, r)
 		case http.MethodPatch:
-			env.UpdateAlbum(w, r)
+			albums.UpdateAlbum(w, r)
 		case http.MethodDelete:
-			env.DeleteAlbum(w, r)
+			albums.DeleteAlbum(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/albums/random", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPut:
+			albums.AddRandom(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/albums/artist/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			albums.GetAlbumsByArtist(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -53,16 +80,6 @@ func main() {
 	if err != nil {
 		return
 	}
-
-	//router.GET("/albums/:id", env.GetAlbumByID)
-	//router.GET("/albums/artist/:artist", env.GetAlbumsByArtist)
-	//
-	//router.PUT("/albums/random", env.AddRandom)
-	//
-	//err := router.Run(":" + os.Getenv("APPLICATION_PORT"))
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 }
 
 func corsMiddleware(h http.Handler) http.Handler {
