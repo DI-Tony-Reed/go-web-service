@@ -21,7 +21,7 @@ type Albums struct {
 	Db *sql.DB
 }
 
-func (e *Albums) GetAlbums(w http.ResponseWriter, req *http.Request) {
+func (e *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 	albums, err := e.getAlbumsRows()
 
 	if err != nil {
@@ -34,8 +34,8 @@ func (e *Albums) GetAlbums(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, req *http.Request) {
-	name := strings.TrimPrefix(req.URL.Path, "/albums/artist/")
+func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimPrefix(r.URL.Path, "/albums/artist/")
 
 	rows, err := e.Db.Query(`SELECT * FROM album WHERE artist LIKE CONCAT('%', ?, '%')`, name)
 	if err != nil {
@@ -137,8 +137,8 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (e *Albums) GetAlbumByID(w http.ResponseWriter, req *http.Request) {
-	id := strings.TrimPrefix(req.URL.Path, "/albums/")
+func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/albums/")
 	rows, err := e.Db.Query("SELECT * FROM album WHERE id = ?", id)
 
 	if err != nil {
@@ -148,7 +148,6 @@ func (e *Albums) GetAlbumByID(w http.ResponseWriter, req *http.Request) {
 	albums, err := handleAlbumRows(rows)
 
 	if err != nil {
-		log.Fatal("failure within handleAlbumRows")
 	}
 
 	if len(albums) == 0 {
@@ -164,13 +163,14 @@ func (e *Albums) GetAlbumByID(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (e *Albums) DeleteAlbum(w http.ResponseWriter, req *http.Request) {
-	//_, err := e.Db.Exec("DELETE FROM album WHERE id = ?", c.Param("id"))
-	//if err != nil {
-	//	log.Fatalf("failed to delete album")
-	//}
-	//
-	//c.IndentedJSON(http.StatusOK, gin.H{"message": "album successfully removed"})
+func (e *Albums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
+	_, err := e.Db.Exec("DELETE FROM album WHERE id = ? LIMIT 1", strings.TrimPrefix(r.URL.Path, "/albums/"))
+	if err != nil {
+		http.Error(w, "could not delete album", http.StatusInternalServerError)
+		return
+	}
+
+	_ = ServeJSON(w, map[string]any{"message": "album successfully removed"}, http.StatusOK)
 }
 
 func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
