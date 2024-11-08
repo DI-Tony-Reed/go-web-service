@@ -26,10 +26,14 @@ func init() {
 }
 
 func main() {
-	db := utils.DatabaseInit()
+	db, err := utils.DatabaseInit()
+	if err != nil {
+		panic("failed to connect to database")
+	}
+
 	endpoints := &api.Albums{Db: db}
 
-	err := api.SetupRouter(endpoints)
+	err = api.SetupRouter(endpoints)
 	if err != nil {
 		panic("failed to setup router")
 	}
