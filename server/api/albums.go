@@ -26,6 +26,7 @@ func (e *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	ServeJSON(w, albums, http.StatusOK)
@@ -33,15 +34,25 @@ func (e *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 
 func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/albums/artist/")
+	name = "%" + name + "%"
 
-	rows, err := e.Db.Query(`SELECT * FROM album WHERE artist LIKE CONCAT('%', ?, '%')`, name)
+	stmt, err := e.Db.Prepare(`SELECT * FROM album WHERE artist LIKE ?`)
+	if err != nil {
+		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist prepare %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(name)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	albums, err := handleAlbumRows(rows)
 	if err != nil {
 		ServeJSONError(w, "failed to get albums by artist", http.StatusInternalServerError)
+		return
 	}
 
 	if len(albums) > 0 {
@@ -104,7 +115,13 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 		Price:  float32(price),
 	}
 
-	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
+	stmt, err := e.Db.Prepare(`INSERT INTO album (title, artist, price) VALUES (?, ?, ?)`)
+	if err != nil {
+		ServeJSONError(w, fmt.Sprintf("AddAlbum prepare %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	result, err := stmt.Exec(album.Title, album.Artist, album.Price)
 	if err != nil {
 		ServeJSONError(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
 		return

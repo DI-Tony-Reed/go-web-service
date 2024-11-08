@@ -7,33 +7,33 @@ import (
 	"testing"
 )
 
-type MockAlbums struct{}
+type MockRouterAlbums struct{}
 
-func (m *MockAlbums) GetAlbums(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, []string{"Album1", "Album2"}, http.StatusOK)
 }
 
-func (m *MockAlbums) AddAlbum(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, "Album added", http.StatusCreated)
 }
 
-func (m *MockAlbums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, "Album1", http.StatusOK)
 }
 
-func (m *MockAlbums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, "Album updated", http.StatusOK)
 }
 
-func (m *MockAlbums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, "Album deleted", http.StatusOK)
 }
 
-func (m *MockAlbums) AddRandom(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) AddRandom(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, "Random album added", http.StatusCreated)
 }
 
-func (m *MockAlbums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
+func (m *MockRouterAlbums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 	ServeJSON(w, []string{"Album1", "Album2"}, http.StatusOK)
 }
 
@@ -54,7 +54,7 @@ func TestServeJSONError(t *testing.T) {
 }
 
 func TestSetupRouter(t *testing.T) {
-	albums := &MockAlbums{}
+	albums := &MockRouterAlbums{}
 
 	// Get the configured router
 	router := SetupRouter(albums)
@@ -89,7 +89,7 @@ func TestSetupRouter(t *testing.T) {
 }
 
 func TestSetupRouter__InvalidRoutes(t *testing.T) {
-	albums := &MockAlbums{}
+	albums := &MockRouterAlbums{}
 
 	// Get the configured router
 	router := SetupRouter(albums)
