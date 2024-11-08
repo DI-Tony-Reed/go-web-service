@@ -25,13 +25,10 @@ func (e *Albums) GetAlbums(w http.ResponseWriter, r *http.Request) {
 	albums, err := e.getAlbumsRows()
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
+		ServeJSONError(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
 	}
 
-	err = ServeJSON(w, albums, http.StatusOK)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("GetAlbums %v", err), http.StatusInternalServerError)
-	}
+	ServeJSON(w, albums, http.StatusOK)
 }
 
 func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
@@ -39,27 +36,20 @@ func (e *Albums) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := e.Db.Query(`SELECT * FROM album WHERE artist LIKE CONCAT('%', ?, '%')`, name)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
+		ServeJSONError(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
 	}
 
 	albums, err := handleAlbumRows(rows)
 	if err != nil {
-		http.Error(w, "failed to get albums by artist", http.StatusInternalServerError)
+		ServeJSONError(w, "failed to get albums by artist", http.StatusInternalServerError)
 	}
 
 	if len(albums) > 0 {
-		err := ServeJSON(w, albums, http.StatusOK)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
-		}
-
+		ServeJSON(w, albums, http.StatusOK)
 		return
 	}
 
-	err = ServeJSON(w, map[string]any{"errors": "failed to find an album with provided search: " + name}, http.StatusNotFound)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("GetAlbumsByArtist %v", err), http.StatusInternalServerError)
-	}
+	ServeJSONError(w, fmt.Sprintf("failed to find an album with provided search: %v", name), http.StatusNotFound)
 }
 
 func (e *Albums) getAlbumsRows() ([]Album, error) {
@@ -101,10 +91,7 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 	requiredKeys := []string{"title", "artist", "price"}
 	for _, value := range requiredKeys {
 		if _, ok := parameters[value]; !ok {
-			err := ServeJSON(w, map[string]any{"errors": "must pass in a '" + value + "'"}, http.StatusBadRequest)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
-			}
+			ServeJSONError(w, fmt.Sprintf("must pass in a '%v'", value), http.StatusBadRequest)
 			return
 		}
 	}
@@ -119,21 +106,16 @@ func (e *Albums) AddAlbum(w http.ResponseWriter, r *http.Request) {
 
 	result, err := e.Db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ? ,?)", album.Title, album.Artist, album.Price)
 	if err != nil {
-		log.Fatalf("AddAlbum: %v", err)
+		ServeJSONError(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	lastId, err := result.LastInsertId()
 	if err != nil {
-		err := ServeJSON(w, map[string]any{"errors": "failed to create album"}, http.StatusBadRequest)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
-		}
+		ServeJSONError(w, "failed to create album", http.StatusBadRequest)
 	} else {
 		album.ID = lastId
-		err := ServeJSON(w, album, http.StatusOK)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("AddAlbum: %v", err), http.StatusInternalServerError)
-		}
+		ServeJSON(w, album, http.StatusOK)
 	}
 }
 
@@ -142,7 +124,8 @@ func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	rows, err := e.Db.Query("SELECT * FROM album WHERE id = ?", id)
 
 	if err != nil {
-		log.Fatalf("getAlbumsByID %q: %v", id, err)
+		ServeJSONError(w, fmt.Sprintf("getAlbumsByID %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	albums, err := handleAlbumRows(rows)
@@ -151,26 +134,20 @@ func (e *Albums) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(albums) == 0 {
-		err := ServeJSON(w, map[string]any{"errors": "album not found"}, http.StatusNotFound)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("GetAlbumByID %v", err), http.StatusInternalServerError)
-		}
+		ServeJSONError(w, "album not found", http.StatusNotFound)
 	} else {
-		err := ServeJSON(w, albums, http.StatusOK)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("GetAlbumByID %v", err), http.StatusInternalServerError)
-		}
+		ServeJSON(w, albums, http.StatusOK)
 	}
 }
 
 func (e *Albums) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
 	_, err := e.Db.Exec("DELETE FROM album WHERE id = ? LIMIT 1", strings.TrimPrefix(r.URL.Path, "/albums/"))
 	if err != nil {
-		http.Error(w, "could not delete album", http.StatusInternalServerError)
+		ServeJSONError(w, "could not delete album", http.StatusInternalServerError)
 		return
 	}
 
-	_ = ServeJSON(w, map[string]any{"message": "album successfully removed"}, http.StatusOK)
+	ServeJSON(w, map[string]any{"message": "album successfully removed"}, http.StatusOK)
 }
 
 func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
@@ -200,17 +177,11 @@ func (e *Albums) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 
 	_, err := e.Db.Exec(dynamicSql, values...)
 	if err != nil {
-		err := ServeJSON(w, map[string]any{"errors": "could not update album", "error": err}, http.StatusBadRequest)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("UpdateAlbum %v", err), http.StatusInternalServerError)
-		}
+		ServeJSONError(w, "could not update album", http.StatusBadRequest)
 		return
 	}
 
-	err = ServeJSON(w, map[string]any{"message": "album successfully updated"}, http.StatusOK)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("UpdateAlbum %v", err), http.StatusInternalServerError)
-	}
+	ServeJSON(w, map[string]any{"message": "album successfully updated"}, http.StatusOK)
 }
 
 func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
@@ -231,15 +202,9 @@ func (e *Albums) AddRandom(w http.ResponseWriter, r *http.Request) {
 
 	lastId, err := result.LastInsertId()
 	if err != nil {
-		err := ServeJSON(w, map[string]any{"errors": "failed to create album"}, http.StatusInternalServerError)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("AddRandom %v", err), http.StatusInternalServerError)
-		}
+		ServeJSON(w, map[string]any{"errors": "failed to create album"}, http.StatusInternalServerError)
 	} else {
 		album.ID = lastId
-		err := ServeJSON(w, album, http.StatusOK)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("AddRandom %v", err), http.StatusInternalServerError)
-		}
+		ServeJSON(w, album, http.StatusOK)
 	}
 }

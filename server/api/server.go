@@ -2,19 +2,18 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"os"
 )
 
-func ServeJSON(w http.ResponseWriter, data any, statusCode int) error {
+func ServeJSON(w http.ResponseWriter, data any, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		return errors.New("failed to encode JSON")
-	}
-	return nil
+	_ = json.NewEncoder(w).Encode(data)
+}
+
+func ServeJSONError(w http.ResponseWriter, message string, statusCode int) {
+	ServeJSON(w, map[string]any{"errors": message}, statusCode)
 }
 
 func corsMiddleware(h http.Handler) http.Handler {
