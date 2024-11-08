@@ -3,8 +3,17 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 )
+
+type AlbumsInterface interface {
+	GetAlbums(w http.ResponseWriter, r *http.Request)
+	AddAlbum(w http.ResponseWriter, r *http.Request)
+	GetAlbumByID(w http.ResponseWriter, r *http.Request)
+	UpdateAlbum(w http.ResponseWriter, r *http.Request)
+	DeleteAlbum(w http.ResponseWriter, r *http.Request)
+	AddRandom(w http.ResponseWriter, r *http.Request)
+	GetAlbumsByArtist(w http.ResponseWriter, r *http.Request)
+}
 
 func ServeJSON(w http.ResponseWriter, data any, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
@@ -24,16 +33,11 @@ func corsMiddleware(h http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length")
 
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
 		h.ServeHTTP(w, r)
 	})
 }
 
-func SetupRouter(albums *Albums) error {
+func SetupRouter(albums AlbumsInterface) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/albums", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -79,10 +83,5 @@ func SetupRouter(albums *Albums) error {
 
 	handler := corsMiddleware(mux)
 
-	err := http.ListenAndServe(":"+os.Getenv("APPLICATION_PORT"), handler)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return handler
 }
