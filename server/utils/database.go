@@ -2,14 +2,14 @@ package utils
 
 import (
 	"database/sql"
-	"log"
 	"os"
 
 	"github.com/go-sql-driver/mysql"
 )
 
-func DatabaseInit() *sql.DB {
-	// Setup DB connection
+var sqlOpen = sql.Open
+
+func DatabaseInit() (*sql.DB, error) {
 	config := mysql.Config{
 		User:                 os.Getenv("DATABASE_USER"),
 		Passwd:               os.Getenv("DATABASE_PASSWORD"),
@@ -19,16 +19,15 @@ func DatabaseInit() *sql.DB {
 		AllowNativePasswords: true,
 	}
 
-	// Get DB handle
-	db, err := sql.Open("mysql", config.FormatDSN())
+	db, err := sqlOpen("mysql", config.FormatDSN())
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
+	err = db.Ping()
+	if err != nil {
+		return nil, err
 	}
 
-	return db
+	return db, nil
 }
