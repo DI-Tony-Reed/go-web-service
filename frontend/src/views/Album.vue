@@ -1,17 +1,17 @@
 <template>
 	<div class="card d-flex justify-between align-center">
 		<div>
-			ID: {{ album.ID }}
+			ID: {{ album.id }}
 			<br>
-			Title: {{ album.Title }}
+			Title: {{ album.title }}
 			<br>
-			Artist: {{ album.Artist }}
+			Artist: {{ album.artist }}
 			<br>
-			Price: {{ parseFloat(album.Price).toFixed(2) }}
+			Price: {{ parseFloat(album.price).toFixed(2) }}
 		</div>
 		<div>
-			<button @click.prevent="deleteAlbum(album.ID)">Delete</button>
-			<button @click.prevent="editAlbum(album.ID)">Edit</button>
+			<button @click.prevent="deleteAlbum(album.id)">Delete</button>
+			<button @click.prevent="editAlbum(album.id)">Edit</button>
 		</div>
 	</div>
 </template>

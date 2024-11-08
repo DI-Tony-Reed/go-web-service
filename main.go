@@ -1,14 +1,8 @@
 package main
 
 import (
-	"log"
-	"os"
-	"time"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"go-web-service/server/rest"
+	"go-web-service/server/api"
 	"go-web-service/server/utils"
 )
 
@@ -33,31 +27,10 @@ func init() {
 
 func main() {
 	db := utils.DatabaseInit()
-	env := &rest.Env{Db: db}
+	endpoints := &api.Albums{Db: db}
 
-	// Setup gin router
-	router := gin.Default()
-
-	router.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowCredentials: true,
-		AllowMethods:     []string{"GET", "POST", "DELETE", "PUT", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		MaxAge:           12 * time.Hour,
-	}))
-
-	router.GET("/albums", env.GetAlbums)
-	router.GET("/albums/:id", env.GetAlbumByID)
-	router.GET("/albums/artist/:artist", env.GetAlbumsByArtist)
-
-	router.PUT("/albums", env.AddAlbum)
-	router.PUT("/albums/random", env.AddRandom)
-	router.PATCH("/albums/:id", env.UpdateAlbum)
-	router.DELETE("/albums/:id", env.DeleteAlbum)
-
-	err := router.Run(":" + os.Getenv("APPLICATION_PORT"))
+	err := api.SetupRouter(endpoints)
 	if err != nil {
-		log.Fatal(err)
+		panic("failed to setup router")
 	}
 }

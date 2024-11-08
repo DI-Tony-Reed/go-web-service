@@ -11,10 +11,10 @@
 				<button @click.prevent="getDefaultAlbums">Reset</button>
 			</form>
 		</div>
-		
+
 		<Album
 			v-for="album in store.albums"
-			v-bind:key="album.ID"
+			v-bind:key="album.id"
 			:album=album
 			@deleteAlbum="deleteAlbum"
 		></Album>
@@ -58,7 +58,7 @@ export default {
     deleteAlbum(id) {
       let request = new Request(`albums/${id}`)
       request.delete().then(() => {
-        this.store.albums = this.store.albums.filter(album => album.ID !== id)
+        this.store.albums = this.store.albums.filter(album => album.id !== id)
       })
     },
     getDefaultAlbums() {
