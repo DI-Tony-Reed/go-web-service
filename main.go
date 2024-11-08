@@ -4,6 +4,8 @@ import (
 	"github.com/joho/godotenv"
 	"go-web-service/server/api"
 	"go-web-service/server/utils"
+	"net/http"
+	"os"
 )
 
 var environment = "development"
@@ -26,11 +28,16 @@ func init() {
 }
 
 func main() {
-	db := utils.DatabaseInit()
+	db, err := utils.DatabaseInit()
+	if err != nil {
+		panic("failed to connect to database")
+	}
+
 	endpoints := &api.Albums{Db: db}
 
-	err := api.SetupRouter(endpoints)
+	router := api.SetupRouter(endpoints)
+	err = http.ListenAndServe(":"+os.Getenv("APPLICATION_PORT"), router)
 	if err != nil {
-		panic("failed to setup router")
+		panic(err)
 	}
 }

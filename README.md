@@ -1,3 +1,6 @@
+[![Tests](https://github.com/DI-Tony-Reed/go-web-service/actions/workflows/tests.yml/badge.svg)](https://github.com/DI-Tony-Reed/go-web-service/actions/workflows/tests.yml)
+![Coverage Badge](https://img.shields.io/badge/Coverage-87.8%25-green.svg)
+
 # First time setup
 
 - Copy `.env.example` to `.env.production` and `.env.development` and fill out with the appropriate values based on your

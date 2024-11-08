@@ -2,12 +2,15 @@
 *.idea/
 tmp/
 
+# JS dependencies
 frontend/node_modules
+
+# Code coverage reports
+coverage.html
 
 # Environment variables
 .env.production
 .env.development
-
 frontend/.env.development
 frontend/.env.production
 
