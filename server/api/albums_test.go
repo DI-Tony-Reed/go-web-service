@@ -11,11 +11,16 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestGetAlbums(t *testing.T) {
+func getMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("Failed to open mock database: %v", err)
 	}
+	return db, mock
+}
+
+func TestGetAlbums(t *testing.T) {
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	rows := sqlmock.NewRows([]string{"id", "title", "artist", "price"}).
@@ -51,10 +56,7 @@ func TestGetAlbums(t *testing.T) {
 }
 
 func TestGetAlbums_Error(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectQuery("SELECT \\* FROM album").WillReturnError(fmt.Errorf("query error"))
@@ -87,10 +89,7 @@ func TestGetAlbums_Error(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -128,10 +127,7 @@ func TestGetAlbumsByArtist(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_HandleAlbumRowsError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -176,10 +172,7 @@ func TestGetAlbumsByArtist_HandleAlbumRowsError(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_PrepareError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).WillReturnError(fmt.Errorf("prepare error"))
@@ -212,10 +205,7 @@ func TestGetAlbumsByArtist_PrepareError(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_QueryError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -251,10 +241,7 @@ func TestGetAlbumsByArtist_QueryError(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_NoAlbumsFound(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -290,10 +277,7 @@ func TestGetAlbumsByArtist_NoAlbumsFound(t *testing.T) {
 }
 
 func TestAddAlbum(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -329,10 +313,7 @@ func TestAddAlbum(t *testing.T) {
 }
 
 func TestAddAlbum_MissingParameters(t *testing.T) {
-	db, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, _ := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -359,10 +340,7 @@ func TestAddAlbum_MissingParameters(t *testing.T) {
 }
 
 func TestAddAlbum_PrepareError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -396,10 +374,7 @@ func TestAddAlbum_PrepareError(t *testing.T) {
 }
 
 func TestAddAlbum_InsertError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -435,10 +410,7 @@ func TestAddAlbum_InsertError(t *testing.T) {
 }
 
 func TestAddAlbum_LastInsertIdError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -474,10 +446,7 @@ func TestAddAlbum_LastInsertIdError(t *testing.T) {
 }
 
 func TestGetAlbumByID(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
@@ -514,10 +483,7 @@ func TestGetAlbumByID(t *testing.T) {
 }
 
 func TestGetAlbumByID_HandleAlbumRowsError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
@@ -561,10 +527,7 @@ func TestGetAlbumByID_HandleAlbumRowsError(t *testing.T) {
 }
 
 func TestGetAlbumByID_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -658,10 +621,7 @@ func TestGetAlbumByID_Errors(t *testing.T) {
 }
 
 func TestDeleteAlbum(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectExec("DELETE FROM album WHERE id = \\? LIMIT 1").
@@ -696,10 +656,7 @@ func TestDeleteAlbum(t *testing.T) {
 }
 
 func TestDeleteAlbum_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -735,10 +692,7 @@ func TestDeleteAlbum_Errors(t *testing.T) {
 }
 
 func TestUpdateAlbum(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("UPDATE album SET title = \\?, artist = \\?, price = \\? WHERE id = \\?").
@@ -774,10 +728,7 @@ func TestUpdateAlbum(t *testing.T) {
 }
 
 func TestUpdateAlbum_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -842,10 +793,7 @@ func TestUpdateAlbum_Errors(t *testing.T) {
 }
 
 func TestAddRandom(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -875,10 +823,7 @@ func TestAddRandom(t *testing.T) {
 }
 
 func TestAddRandom_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -915,10 +860,7 @@ func TestAddRandom_Errors(t *testing.T) {
 }
 
 func TestAddRandom_PrepareError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -953,10 +895,7 @@ func TestAddRandom_PrepareError(t *testing.T) {
 }
 
 func TestAddRandom_LastInsertIdError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
