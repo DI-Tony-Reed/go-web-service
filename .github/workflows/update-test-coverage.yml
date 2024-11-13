@@ -36,7 +36,6 @@ jobs:
             COLOR="brightgreen"
           fi
           
-          
           cd ..
           BADGE_MARKDOWN="![Coverage Badge](https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COLOR}.svg)"
           sed -i "s|!\[Coverage Badge\](.*)|$BADGE_MARKDOWN|g" README.md
