@@ -8,19 +8,8 @@ import (
 	"os"
 )
 
-var environment = "development"
-
 func init() {
-	var path string
-
-	// This variable is updated via build flags for prod builds
-	if environment == "production" {
-		path = ".env.production"
-	} else {
-		path = ".env.development"
-	}
-
-	err := godotenv.Load(path)
+	err := godotenv.Load(".env")
 
 	if err != nil {
 		panic("failed to load .env file")
