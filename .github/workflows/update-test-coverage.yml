@@ -9,27 +9,19 @@ jobs:
   build:
     name: Go test coverage
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Download coverage report
+        uses: actions/download-artifact@v3
         with:
-          go-version: '1.23'
-
-      - name: Install dependencies
-        run: go get .
-
-      - name: Build
-        run: go build -v ./...
+          name: coverage-report
+          path: server/coverage.out
 
       - name: Run tests and generate coverage badge
         id: badge
         run: |
-          go test -coverprofile=coverage.out ./...
+          cd server
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Coverage: $COVERAGE"
           
@@ -44,6 +36,8 @@ jobs:
             COLOR="brightgreen"
           fi
           
+          
+          cd ..
           BADGE_MARKDOWN="![Coverage Badge](https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COLOR}.svg)"
           sed -i "s|!\[Coverage Badge\](.*)|$BADGE_MARKDOWN|g" README.md
 
