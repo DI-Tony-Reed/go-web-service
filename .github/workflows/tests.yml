@@ -27,11 +27,5 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      - name: Test with coverage
-        run: go test -v -coverprofile=coverage.out ./...
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: server/coverage.out
+      - name: Test
+        run: go test -v ./...
