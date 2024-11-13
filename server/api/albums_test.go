@@ -11,11 +11,29 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestGetAlbums(t *testing.T) {
+func getMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("Failed to open mock database: %v", err)
 	}
+	return db, mock
+}
+
+func sendMockHTTPRequest(t *testing.T, handler http.HandlerFunc, method, url string) *httptest.ResponseRecorder {
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+
+	return rr
+}
+
+func TestGetAlbums(t *testing.T) {
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	rows := sqlmock.NewRows([]string{"id", "title", "artist", "price"}).
@@ -25,15 +43,7 @@ func TestGetAlbums(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbums)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbums, http.MethodGet, "/albums")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -51,25 +61,14 @@ func TestGetAlbums(t *testing.T) {
 }
 
 func TestGetAlbums_Error(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectQuery("SELECT \\* FROM album").WillReturnError(fmt.Errorf("query error"))
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbums)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbums, http.MethodGet, "/albums")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -87,10 +86,7 @@ func TestGetAlbums_Error(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -102,15 +98,7 @@ func TestGetAlbumsByArtist(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/artist/Artist1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumsByArtist)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumsByArtist, http.MethodGet, "/albums/artist/Artist1")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -128,10 +116,7 @@ func TestGetAlbumsByArtist(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_HandleAlbumRowsError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -148,17 +133,10 @@ func TestGetAlbumsByArtist_HandleAlbumRowsError(t *testing.T) {
 	handleAlbumRows = func(rows *sql.Rows) ([]Album, error) {
 		return nil, fmt.Errorf("mocked error")
 	}
-	defer func() { handleAlbumRows = originalHandleAlbumRows }() // Reset after test
+	// Reset after test
+	defer func() { handleAlbumRows = originalHandleAlbumRows }()
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/artist/Artist1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumsByArtist)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumsByArtist, http.MethodGet, "/albums/artist/Artist1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -176,25 +154,14 @@ func TestGetAlbumsByArtist_HandleAlbumRowsError(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_PrepareError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).WillReturnError(fmt.Errorf("prepare error"))
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/artist/Artist1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumsByArtist)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumsByArtist, http.MethodGet, "/albums/artist/Artist1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -212,10 +179,7 @@ func TestGetAlbumsByArtist_PrepareError(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_QueryError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -225,15 +189,7 @@ func TestGetAlbumsByArtist_QueryError(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/artist/Artist1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumsByArtist)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumsByArtist, http.MethodGet, "/albums/artist/Artist1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -251,10 +207,7 @@ func TestGetAlbumsByArtist_QueryError(t *testing.T) {
 }
 
 func TestGetAlbumsByArtist_NoAlbumsFound(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE artist LIKE \?`).
@@ -264,15 +217,7 @@ func TestGetAlbumsByArtist_NoAlbumsFound(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/artist/NonExistentArtist", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumsByArtist)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumsByArtist, http.MethodGet, "/albums/artist/NonExistentArtist")
 
 	if status := rr.Code; status != http.StatusNotFound {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusNotFound)
@@ -290,10 +235,7 @@ func TestGetAlbumsByArtist_NoAlbumsFound(t *testing.T) {
 }
 
 func TestAddAlbum(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -303,15 +245,7 @@ func TestAddAlbum(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddAlbum, http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -329,23 +263,12 @@ func TestAddAlbum(t *testing.T) {
 }
 
 func TestAddAlbum_MissingParameters(t *testing.T) {
-	db, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, _ := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPut, "/albums?title=Album1&artist=Artist1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddAlbum, http.MethodPut, "/albums?title=Album1&artist=Artist1")
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
@@ -359,10 +282,7 @@ func TestAddAlbum_MissingParameters(t *testing.T) {
 }
 
 func TestAddAlbum_PrepareError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -370,15 +290,7 @@ func TestAddAlbum_PrepareError(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10.99", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddAlbum, http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10.99")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -396,10 +308,7 @@ func TestAddAlbum_PrepareError(t *testing.T) {
 }
 
 func TestAddAlbum_InsertError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -409,15 +318,7 @@ func TestAddAlbum_InsertError(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddAlbum, http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -435,10 +336,7 @@ func TestAddAlbum_InsertError(t *testing.T) {
 }
 
 func TestAddAlbum_LastInsertIdError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -448,15 +346,7 @@ func TestAddAlbum_LastInsertIdError(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddAlbum, http.MethodPut, "/albums?title=Album1&artist=Artist1&price=10")
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
@@ -474,10 +364,7 @@ func TestAddAlbum_LastInsertIdError(t *testing.T) {
 }
 
 func TestGetAlbumByID(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
@@ -488,15 +375,7 @@ func TestGetAlbumByID(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumByID)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumByID, http.MethodGet, "/albums/1")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -514,10 +393,7 @@ func TestGetAlbumByID(t *testing.T) {
 }
 
 func TestGetAlbumByID_HandleAlbumRowsError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).
@@ -533,17 +409,10 @@ func TestGetAlbumByID_HandleAlbumRowsError(t *testing.T) {
 	handleAlbumRows = func(rows *sql.Rows) ([]Album, error) {
 		return nil, fmt.Errorf("mocked error")
 	}
-	defer func() { handleAlbumRows = originalHandleAlbumRows }() // Reset after test
+	// Reset after test
+	defer func() { handleAlbumRows = originalHandleAlbumRows }()
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumByID)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumByID, http.MethodGet, "/albums/1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -561,10 +430,7 @@ func TestGetAlbumByID_HandleAlbumRowsError(t *testing.T) {
 }
 
 func TestGetAlbumByID_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -572,15 +438,7 @@ func TestGetAlbumByID_Errors(t *testing.T) {
 	// Prepare error case
 	mock.ExpectPrepare(`SELECT \* FROM album WHERE id = \?`).WillReturnError(fmt.Errorf("prepare error"))
 
-	req, err := http.NewRequest(http.MethodGet, "/albums/1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.GetAlbumByID)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.GetAlbumByID, http.MethodGet, "/albums/1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -602,15 +460,7 @@ func TestGetAlbumByID_Errors(t *testing.T) {
 		WithArgs("1").
 		WillReturnError(fmt.Errorf("query error"))
 
-	req, err = http.NewRequest(http.MethodGet, "/albums/1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr = httptest.NewRecorder()
-
-	handler = http.HandlerFunc(albums.GetAlbumByID)
-	handler.ServeHTTP(rr, req)
+	rr = sendMockHTTPRequest(t, albums.GetAlbumByID, http.MethodGet, "/albums/1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -632,15 +482,7 @@ func TestGetAlbumByID_Errors(t *testing.T) {
 		WithArgs("999").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "artist", "price"}))
 
-	req, err = http.NewRequest(http.MethodGet, "/albums/999", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr = httptest.NewRecorder()
-
-	handler = http.HandlerFunc(albums.GetAlbumByID)
-	handler.ServeHTTP(rr, req)
+	rr = sendMockHTTPRequest(t, albums.GetAlbumByID, http.MethodGet, "/albums/999")
 
 	if status := rr.Code; status != http.StatusNotFound {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusNotFound)
@@ -658,10 +500,7 @@ func TestGetAlbumByID_Errors(t *testing.T) {
 }
 
 func TestDeleteAlbum(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectExec("DELETE FROM album WHERE id = \\? LIMIT 1").
@@ -670,15 +509,7 @@ func TestDeleteAlbum(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodDelete, "/albums/1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.DeleteAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.DeleteAlbum, http.MethodDelete, "/albums/1")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -696,10 +527,7 @@ func TestDeleteAlbum(t *testing.T) {
 }
 
 func TestDeleteAlbum_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -709,15 +537,7 @@ func TestDeleteAlbum_Errors(t *testing.T) {
 		WithArgs("1").
 		WillReturnError(fmt.Errorf("exec error"))
 
-	req, err := http.NewRequest(http.MethodDelete, "/albums/1", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.DeleteAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.DeleteAlbum, http.MethodDelete, "/albums/1")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -735,10 +555,7 @@ func TestDeleteAlbum_Errors(t *testing.T) {
 }
 
 func TestUpdateAlbum(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("UPDATE album SET title = \\?, artist = \\?, price = \\? WHERE id = \\?").
@@ -748,15 +565,7 @@ func TestUpdateAlbum(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.UpdateAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.UpdateAlbum, http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -774,10 +583,7 @@ func TestUpdateAlbum(t *testing.T) {
 }
 
 func TestUpdateAlbum_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -786,15 +592,7 @@ func TestUpdateAlbum_Errors(t *testing.T) {
 	mock.ExpectPrepare("UPDATE album SET title = \\?, artist = \\?, price = \\? WHERE id = \\?").
 		WillReturnError(fmt.Errorf("prepare error"))
 
-	req, err := http.NewRequest(http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20.99", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.UpdateAlbum)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.UpdateAlbum, http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -816,15 +614,7 @@ func TestUpdateAlbum_Errors(t *testing.T) {
 		WithArgs("UpdatedTitle", "UpdatedArtist", "20.99", "1").
 		WillReturnError(fmt.Errorf("exec error"))
 
-	req, err = http.NewRequest(http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20.99", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr = httptest.NewRecorder()
-
-	handler = http.HandlerFunc(albums.UpdateAlbum)
-	handler.ServeHTTP(rr, req)
+	rr = sendMockHTTPRequest(t, albums.UpdateAlbum, http.MethodPatch, "/albums/1?title=UpdatedTitle&artist=UpdatedArtist&price=20.99")
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
@@ -842,10 +632,7 @@ func TestUpdateAlbum_Errors(t *testing.T) {
 }
 
 func TestAddRandom(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
@@ -855,15 +642,7 @@ func TestAddRandom(t *testing.T) {
 
 	albums := &Albums{Db: db}
 
-	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddRandom)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddRandom, http.MethodPost, "/albums/random")
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
@@ -875,10 +654,7 @@ func TestAddRandom(t *testing.T) {
 }
 
 func TestAddRandom_Errors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -889,15 +665,7 @@ func TestAddRandom_Errors(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(fmt.Errorf("exec error"))
 
-	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddRandom)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddRandom, http.MethodPost, "/albums/random")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -915,10 +683,7 @@ func TestAddRandom_Errors(t *testing.T) {
 }
 
 func TestAddRandom_PrepareError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -927,15 +692,7 @@ func TestAddRandom_PrepareError(t *testing.T) {
 	mock.ExpectPrepare("INSERT INTO album \\(title, artist, price\\) VALUES \\(\\?, \\?, \\?\\)").
 		WillReturnError(fmt.Errorf("prepare error"))
 
-	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddRandom)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddRandom, http.MethodPost, "/albums/random")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
@@ -953,10 +710,7 @@ func TestAddRandom_PrepareError(t *testing.T) {
 }
 
 func TestAddRandom_LastInsertIdError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock database: %v", err)
-	}
+	db, mock := getMockDB(t)
 	defer db.Close()
 
 	albums := &Albums{Db: db}
@@ -966,15 +720,7 @@ func TestAddRandom_LastInsertIdError(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("last insert id error")))
 
-	req, err := http.NewRequest(http.MethodPost, "/albums/random", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(albums.AddRandom)
-	handler.ServeHTTP(rr, req)
+	rr := sendMockHTTPRequest(t, albums.AddRandom, http.MethodPost, "/albums/random")
 
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
