@@ -28,7 +28,6 @@ jobs:
 
       - name: Run tests and generate coverage badge
         id: badge
-        working-directory: ./
         run: |
           go test -coverprofile=coverage.out ./...
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
@@ -45,6 +44,7 @@ jobs:
             COLOR="brightgreen"
           fi
           
+          cd ..
           BADGE_MARKDOWN="![Coverage Badge](https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COLOR}.svg)"
           sed -i "s|!\[Coverage Badge\](.*)|$BADGE_MARKDOWN|g" README.md
 
