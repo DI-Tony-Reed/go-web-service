@@ -1,4 +1,3 @@
-BINARY_NAME=go-web-service
 CONTAINER_NAME=backend-development
 
 install:
@@ -18,18 +17,5 @@ test-coverage:
 		go test -coverprofile=coverage.out -coverpkg=./... ./... && \
 		go tool cover -func=coverage.out && \
 		go tool cover -html=coverage.out -o coverage.html'
-	rm coverage.out
+	rm server/coverage.out
 
-build:
-	GOARCH=amd64 GOOS=darwin go build -ldflags="-X 'main.environment=production'" -o bin/${BINARY_NAME}-darwin
-	GOARCH=amd64 GOOS=linux go build -ldflags="-X 'main.environment=production'" -o bin/${BINARY_NAME}-linux
-	GOARCH=amd64 GOOS=windows go build -ldflags="-X 'main.environment=production'" -o bin/${BINARY_NAME}-windows
-
-run: build
-	./${BINARY_NAME}
-
-clean:
-	go clean
-	rm bin/${BINARY_NAME}-darwin
-	rm bin/${BINARY_NAME}-linux
-	rm bin/${BINARY_NAME}-windows

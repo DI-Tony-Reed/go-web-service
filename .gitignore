@@ -7,12 +7,10 @@ frontend/node_modules
 
 # Code coverage reports
 coverage.html
+coverage.out
 
 # Environment variables
-.env.production
-.env.development
-frontend/.env.development
-frontend/.env.production
+.env
 
 # Generated executables
 bin/
