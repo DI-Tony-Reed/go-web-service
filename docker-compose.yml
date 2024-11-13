@@ -5,16 +5,16 @@ services:
     build: ./frontend
     ports:
       - "8000:8000"
-    working_dir: /app
+    working_dir: /app/frontend
     volumes:
       - ./frontend:/app
   backend-development:
     container_name: backend-development
     image: cosmtrek/air
-    working_dir: /app
+    working_dir: /app/server
     restart: always
     env_file:
-      - .env.development
+      - ./server/.env.development
     ports:
       - "8081:8081"
     volumes:
@@ -29,9 +29,9 @@ services:
     container_name: database
     command: --default-authentication-plugin=mysql_native_password
     env_file:
-      - .env.development
+      - ./server/.env.development
     volumes:
-      - ./Docker/init:/docker-entrypoint-initdb.d
+      - ./server/Docker/init:/docker-entrypoint-initdb.d
     ports:
       - '33307:3306'
     healthcheck:

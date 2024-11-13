@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/joho/godotenv"
-	"go-web-service/server/api"
-	"go-web-service/server/utils"
+	"go-web-service/api"
+	"go-web-service/utils"
 	"net/http"
 	"os"
 )
