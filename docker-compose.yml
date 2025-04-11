@@ -14,7 +14,7 @@ services:
     working_dir: /app/server
     restart: always
     env_file:
-      - ./server/.env.development
+      - ./server/.env
     ports:
       - "8081:8081"
     volumes:
@@ -29,7 +29,7 @@ services:
     container_name: database
     command: --default-authentication-plugin=mysql_native_password
     env_file:
-      - ./server/.env.development
+      - ./server/.env
     volumes:
       - ./server/Docker/init:/docker-entrypoint-initdb.d
     ports:
